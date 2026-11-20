@@ -431,7 +431,12 @@ a.btn.primary { color: var(--paper); }
 }
 .login .btn.again { margin-top: 8px; border-color: transparent; background: none; color: var(--muted); }
 
-.hitem.ord span { flex: 1; min-width: 0; align-self: center; font-family: var(--hand); font-size: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hitem.ord button { height: 36px; }
-.hitem.ord button:hover { color: var(--ink); border-color: var(--ink); }
-.hitem.ord button:disabled { opacity: .3; }
+.ord-list { max-height: 68vh; gap: 4px; }
+.hitem.ord { align-items: center; gap: 6px; border-radius: 6px; background: var(--panel); }
+.hitem.ord.drag { background: var(--hl); }
+.hitem.ord .grip { flex: none; width: 40px; height: 40px; display: grid; place-items: center; font-size: 22px; color: var(--muted); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+.hitem.ord.drag .grip { cursor: grabbing; color: var(--ink); }
+.hitem.ord .nm { flex: 1; min-width: 0; font-family: var(--hand); font-size: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; user-select: none; -webkit-user-select: none; }
+.hitem.ord button { width: 30px; height: 30px; border-color: transparent; }
+.hitem.ord button:hover { color: var(--ink); border-color: var(--rule); }
+.hitem.ord button:disabled { opacity: .25; }
