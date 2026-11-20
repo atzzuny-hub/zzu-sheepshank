@@ -421,3 +421,10 @@ dialog p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
 .core .future input[type="date"] { font-size: 21px; width: 176px; }
 a.btn { text-decoration: none; color: var(--ink); display: inline-block; }
 a.btn.primary { color: var(--paper); }
+
+
+.login input.code {
+  width: 100%; border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); color: var(--ink);
+  font: inherit; font-size: 22px; letter-spacing: .2em; padding: 10px 12px; margin-bottom: 12px; font-variant-numeric: tabular-nums;
+}
+.login .btn.again { margin-top: 8px; border-color: transparent; background: none; color: var(--muted); }
