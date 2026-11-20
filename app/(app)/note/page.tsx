@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/Shell";
 import { XMark } from "@/components/Knot";
+import OrderButton from "@/components/OrderButton";
 import { getKeyActions, getMonth, saveNote, savePhrase, setCheck } from "@/lib/data";
 import { WD, daysIn, todayParts, ym, ymd, type Action } from "@/lib/util";
 
@@ -111,6 +112,7 @@ export default function NotePage() {
             <button aria-pressed={pane === "note"} onClick={() => setPane("note")}>한 줄</button>
             <button aria-pressed={pane === "habit"} onClick={() => setPane("habit")}>지킬 일</button>
           </div>
+          <OrderButton habits={habits} onChange={setHabits} />
           <Link className="btn" href="/plan">지킬 일 고르기</Link>
         </div>
       </header>

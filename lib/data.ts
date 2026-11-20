@@ -16,7 +16,7 @@ export async function getPlan() {
 }
 export async function getKeyActions() {
   const rows = await ok(
-    sb().from("actions").select("id,area_id,text,is_key,sort").eq("is_key", true).order("sort").order("created_at"),
+    sb().from("actions").select("id,area_id,text,is_key,sort").eq("is_key", true).order("key_sort").order("created_at"),
   );
   return (rows ?? []) as Action[];
 }
@@ -30,7 +30,9 @@ export const addAction = async (area_id: string, text: string, sort: number) =>
   (await ok(
     sb().from("actions").insert({ area_id, text, sort }).select("id,area_id,text,is_key,sort").single(),
   )) as Action;
-export const updateAction = (id: string, patch: Partial<Pick<Action, "text" | "is_key">>) =>
+export const saveKeyOrder = (ids: string[]) =>
+  Promise.all(ids.map((id, i) => ok(sb().from("actions").update({ key_sort: i + 1 }).eq("id", id))));
+export const updateAction = (id: string, patch: { text?: string; is_key?: boolean; key_sort?: number }) =>
   ok(sb().from("actions").update(patch).eq("id", id));
 export const deleteAction = (id: string) => ok(sb().from("actions").delete().eq("id", id));
 

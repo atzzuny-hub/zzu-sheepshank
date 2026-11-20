@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/Shell";
 import { XMark } from "@/components/Knot";
-import { getJournal, getMonth, getPlan, saveNote, setCheck } from "@/lib/data";
+import { getJournal, getKeyActions, getMonth, getPlan, saveNote, setCheck } from "@/lib/data";
 import { WD, daysIn, todayParts, ymd, type Action, type Area, type Journal } from "@/lib/util";
 
 const NAMES = ["쏟아내기", "알아주기", "가르치기"];
@@ -24,9 +24,9 @@ export default function Home() {
   const box = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    Promise.all([getPlan(), getMonth(t.y, t.m), getJournal(date)])
-      .then(([p, mo, jr]) => {
-        setAreas(p.areas); setHabits(p.actions.filter((a) => a.is_key)); setFuture(p.future);
+    Promise.all([getPlan(), getMonth(t.y, t.m), getJournal(date), getKeyActions()])
+      .then(([p, mo, jr, keys]) => {
+        setAreas(p.areas); setHabits(keys); setFuture(p.future);
         setNotes(mo.notes); setChecks(mo.checks); setPhrase(mo.phrase); setJ(jr); setReady(true);
       })
       .catch(() => setStatus("불러오지 못했어요. 새로고침해 보세요."));

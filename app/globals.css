@@ -430,3 +430,8 @@ a.btn.primary { color: var(--paper); }
   font: inherit; font-size: 16px; padding: 10px 12px; margin-bottom: 12px;
 }
 .login .btn.again { margin-top: 8px; border-color: transparent; background: none; color: var(--muted); }
+
+.hitem.ord span { flex: 1; min-width: 0; align-self: center; font-family: var(--hand); font-size: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hitem.ord button { height: 36px; }
+.hitem.ord button:hover { color: var(--ink); border-color: var(--ink); }
+.hitem.ord button:disabled { opacity: .3; }

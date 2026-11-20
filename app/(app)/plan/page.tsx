@@ -104,7 +104,7 @@ export default function PlanPage() {
     if (!it.is_key && !it.text.trim()) return;
     if (!it.is_key && keyCount >= MAX_KEYS) { setStatus(`지킬 일은 ${MAX_KEYS}개까지예요. 다른 별표를 먼저 빼 주세요.`); return; }
     setActions((p) => p.map((x) => (x.id === it.id ? { ...x, is_key: !it.is_key } : x)));
-    try { await updateAction(it.id, { is_key: !it.is_key }); setStatus("저장됨"); } catch { fail(); }
+    try { await updateAction(it.id, it.is_key ? { is_key: false } : { is_key: true, key_sort: Math.floor(Date.now() / 1000) }); setStatus("저장됨"); } catch { fail(); }
   }
   async function removeAction(id: string) {
     setActions((p) => p.filter((x) => x.id !== id));
