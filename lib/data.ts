@@ -21,7 +21,11 @@ export async function getKeyActions() {
   return (rows ?? []) as Action[];
 }
 export const saveFuture = (uid: string, date: string) =>
-  ok(sb().from("settings").upsert({ user_id: uid, future_date: date || null }));
+  date
+    ? ok(sb().from("settings").upsert({ user_id: uid, future_date: date }))
+    : ok(sb().from("settings").delete().eq("user_id", uid));
+
+
 export const addArea = async (sort: number) =>
   (await ok(sb().from("areas").insert({ name: "", sort }).select("id,name,sort").single())) as Area;
 export const renameArea = (id: string, name: string) => ok(sb().from("areas").update({ name }).eq("id", id));
@@ -51,9 +55,16 @@ export async function getMonth(y: number, m: number) {
   return { notes, checks: set, phrase: (month?.phrase as string | undefined) ?? "" };
 }
 export const saveNote = (uid: string, date: string, note: string) =>
-  ok(sb().from("days").upsert({ user_id: uid, date, note }));
+  note.trim()
+    ? ok(sb().from("days").upsert({ user_id: uid, date, note }))
+    : ok(sb().from("days").delete().eq("date", date));
+
+
 export const savePhrase = (uid: string, key: string, phrase: string) =>
-  ok(sb().from("months").upsert({ user_id: uid, ym: key, phrase }));
+  phrase.trim()
+    ? ok(sb().from("months").upsert({ user_id: uid, ym: key, phrase }))
+    : ok(sb().from("months").delete().eq("ym", key));
+
 export const setCheck = (uid: string, date: string, action_id: string, on: boolean) =>
   on
     ? ok(sb().from("checks").upsert({ user_id: uid, date, action_id }))
@@ -65,7 +76,9 @@ export async function getJournal(date: string): Promise<Journal> {
   return { pour: r?.pour ?? "", listen: r?.listen ?? "", teach: r?.teach ?? "" };
 }
 export const saveJournal = (uid: string, date: string, j: Journal) =>
-  ok(sb().from("journals").upsert({ user_id: uid, date, ...j, updated_at: new Date().toISOString() }));
+  j.pour.trim() || j.listen.trim() || j.teach.trim()
+    ? ok(sb().from("journals").upsert({ user_id: uid, date, ...j, updated_at: new Date().toISOString() }))
+    : ok(sb().from("journals").delete().eq("date", date));
 
 
 /* ---------- 시간 ---------- */
@@ -75,7 +88,9 @@ export async function getTimelog(date: string) {
   return { tasks: (r?.tasks ?? []) as TimeTask[], slots: (r?.slots ?? {}) as Record<string, string> };
 }
 export const saveTimelog = (uid: string, date: string, tasks: TimeTask[], slots: Record<string, string>) =>
-  ok(sb().from("timelogs").upsert({ user_id: uid, date, tasks, slots, updated_at: new Date().toISOString() }));
+  tasks.length || Object.keys(slots).length
+    ? ok(sb().from("timelogs").upsert({ user_id: uid, date, tasks, slots, updated_at: new Date().toISOString() }))
+    : ok(sb().from("timelogs").delete().eq("date", date));
 
 // 그날 노트에 체크된 지킬 일의 id 들
 export async function getChecksOn(date: string) {
