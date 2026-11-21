@@ -18,7 +18,7 @@ export function useApp(): App {
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 let pending = 0;
 
-const TABS = [["/", "메인"], ["/note", "노트"], ["/plan", "계획"], ["/momentum", "모멘텀"], ["/about", "소개"]];
+const TABS = [["/", "메인"], ["/note", "노트"], ["/plan", "계획"], ["/momentum", "모멘텀"], ["/time", "시간"], ["/about", "소개"]];
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname(), router = useRouter();

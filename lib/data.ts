@@ -66,3 +66,19 @@ export async function getJournal(date: string): Promise<Journal> {
 }
 export const saveJournal = (uid: string, date: string, j: Journal) =>
   ok(sb().from("journals").upsert({ user_id: uid, date, ...j, updated_at: new Date().toISOString() }));
+
+
+/* ---------- 시간 ---------- */
+export type TimeTask = { id: string; text: string; color: string; state: 0 | 1 | 2; ref?: string };
+export async function getTimelog(date: string) {
+  const r = await ok(sb().from("timelogs").select("tasks,slots").eq("date", date).maybeSingle());
+  return { tasks: (r?.tasks ?? []) as TimeTask[], slots: (r?.slots ?? {}) as Record<string, string> };
+}
+export const saveTimelog = (uid: string, date: string, tasks: TimeTask[], slots: Record<string, string>) =>
+  ok(sb().from("timelogs").upsert({ user_id: uid, date, tasks, slots, updated_at: new Date().toISOString() }));
+
+// 그날 노트에 체크된 지킬 일의 id 들
+export async function getChecksOn(date: string) {
+  const rows = await ok(sb().from("checks").select("action_id").eq("date", date));
+  return new Set((rows ?? []).map((r) => r.action_id as string));
+}
