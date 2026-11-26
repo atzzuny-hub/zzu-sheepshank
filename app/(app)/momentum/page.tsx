@@ -16,12 +16,24 @@ const STEPS = [
 const ASKS = ["만약 내가 이랬으면 어땠을까?", "그 일로 내가 알게 된 사실은 무엇일까?", "그 일로 내가 성장한 점은 무엇일까?"];
 const EMPTY: Journal = { pour: "", listen: "", teach: "" };
 
+type Day = ReturnType<typeof todayParts>;
+// 주소의 ?date=2026-11-03 을 날짜로 읽습니다. 없거나, 없는 날짜이거나, 내일 이후이면 오늘입니다.
+function dayFrom(s: string | null, today: Day): Day {
+  const hit = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s ?? "");
+  if (!hit) return today;
+  const y = +hit[1], m = +hit[2] - 1, d = +hit[3], dt = new Date(y, m, d);
+  const real = dt.getFullYear() === y && dt.getMonth() === m && dt.getDate() === d; // 11월 31일 같은 날짜를 거릅니다
+  return real && dt <= new Date() ? { y, m, d } : today;
+}
+
 function Momentum() {
   const { uid, queue, setStatus } = useApp();
   const today = useMemo(todayParts, []);
-  const start = Number(useSearchParams().get("step")) || 1;
-  const [day, setDay] = useState(today);
-  const [step, setStep] = useState(Math.min(3, Math.max(1, start)));
+  const sp = useSearchParams();
+  const start = Math.min(3, Math.max(1, Number(sp.get("step")) || 1));
+  // 보여 줄 날은 주소가 정합니다. 그래서 노트의 목록에서 누른 날도, ‹ › 로 옮긴 날도 주소만 보면 알 수 있습니다.
+  const day = dayFrom(sp.get("date"), today);
+  const [step, setStep] = useState(start);
   const [j, setJ] = useState<Journal>(EMPTY);
   const [ready, setReady] = useState(false);
   const [left, setLeft] = useState(900);
@@ -33,6 +45,11 @@ function Momentum() {
   const date = ymd(day.y, day.m, day.d);
   const isToday = day.y === today.y && day.m === today.m && day.d === today.d;
   const st = STEPS[step - 1], text = j[st.k];
+
+  // 날이 바뀌면 그날의 첫 단계부터 봅니다 (주소에 step 이 있으면 그 단계부터).
+  // 그날의 글을 불러올 때까지는 바로 잠가서, 앞의 날 글이 새 날짜로 저장되는 일이 없게 합니다.
+  const [shown, setShown] = useState(date);
+  if (shown !== date) { setShown(date); setReady(false); go(start); }
 
   useEffect(() => {
     let live = true;
@@ -64,9 +81,11 @@ function Momentum() {
 
   function go(s: number) { setStep(s); setNudge(""); if (s !== 1) setRunning(false); }
   function moveDay(delta: number) {
-    const dt = new Date(day.y, day.m, day.d + delta);
+    // 빠르게 여러 번 눌러도 건너뛰지 않도록, 화면이 아니라 지금 주소의 날짜에서 옮깁니다
+    const cur = dayFrom(new URLSearchParams(window.location.search).get("date"), today);
+    const dt = new Date(cur.y, cur.m, cur.d + delta);
     if (dt > new Date(today.y, today.m, today.d)) return;
-    setDay({ y: dt.getFullYear(), m: dt.getMonth(), d: dt.getDate() }); go(1);
+    window.history.replaceState(null, "", `?date=${ymd(dt.getFullYear(), dt.getMonth(), dt.getDate())}`);
   }
   function onText(v: string) {
     const next = { ...j, [st.k]: v };

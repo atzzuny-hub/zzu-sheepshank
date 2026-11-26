@@ -80,6 +80,14 @@ export const saveJournal = (uid: string, date: string, j: Journal) =>
     ? ok(sb().from("journals").upsert({ user_id: uid, date, ...j, updated_at: new Date().toISOString() }))
     : ok(sb().from("journals").delete().eq("date", date));
 
+// 한 달 동안 모멘텀 글을 쓴 날들 (날짜순). 노트의 표 아래 목록에 씁니다.
+export async function getJournalsIn(y: number, m: number): Promise<(Journal & { d: number })[]> {
+  const rows = await ok(
+    sb().from("journals").select("date,pour,listen,teach")
+      .gte("date", ymd(y, m, 1)).lte("date", ymd(y, m, daysIn(y, m))).order("date"),
+  );
+  return (rows ?? []).map((r) => ({ d: +String(r.date).slice(8, 10), pour: r.pour ?? "", listen: r.listen ?? "", teach: r.teach ?? "" }));
+}
 
 /* ---------- 시간 ---------- */
 export type TimeTask = { id: string; text: string; color: string; state: 0 | 1 | 2; ref?: string };
