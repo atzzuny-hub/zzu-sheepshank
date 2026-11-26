@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { sb, configured } from "@/lib/supabase";
 import Knot from "./Knot";
 import About from "./About";
+import Icon, { type IconName } from "./Icons";
 
 type App = { uid: string; setStatus: (s: string) => void; queue: (key: string, fn: () => Promise<unknown>) => void };
 const Ctx = createContext<App | null>(null);
@@ -18,12 +19,18 @@ export function useApp(): App {
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 let pending = 0;
 
-const TABS = [["/", "메인"], ["/note", "노트"], ["/plan", "계획"], ["/momentum", "모멘텀"], ["/time", "시간"], ["/about", "소개"]];
+// 폰과 좁은 창에서는 앞의 다섯 개가 아래 탭바에 놓이고 소개는 메뉴(⋯) 안으로 들어갑니다.
+// 넓은 창에서는 여섯 개가 모두 왼쪽 옆줄에 놓입니다. 배치는 globals.css 의 "틀" 부분이 정합니다.
+const TABS: [string, string, IconName][] = [
+  ["/", "메인", "home"], ["/note", "노트", "note"], ["/plan", "계획", "plan"],
+  ["/momentum", "모멘텀", "momentum"], ["/time", "시간", "time"], ["/about", "소개", "about"],
+];
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const path = usePathname(), router = useRouter();
   const [uid, setUid] = useState<string | null | undefined>(undefined);
   const [status, setStatus] = useState("");
+  const menu = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     if (!configured) return;
@@ -58,20 +65,42 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   if (uid === null)
     return path === "/" ? <div className="wrap"><About loggedOut /></div> : null;
 
+  // 폰에서는 저장 상태가 탭바 위에 작게 뜹니다. 저장됨과 안내는 잠깐 보였다 사라지고, 실패는 다시 저장될 때까지 남습니다.
+  const tone = !status ? "" : status === "저장됨" ? " ok" : status === "저장 중…" ? " busy" : status.includes("못했어요") ? " fail" : " note";
+  const logout = () => { menu.current?.close(); sb().auth.signOut(); };
+
   return (
     <Ctx.Provider value={app}>
-      <div className="wrap">
-        <Link className="brand" href="/" aria-label="Sheepshank 메인으로">
-          <Knot /><span>Sheepshank</span>
-        </Link>
-        <nav className="pages" aria-label="페이지">
-          {TABS.map(([href, label]) => (
-            <Link key={href} href={href} aria-current={path === href ? "page" : undefined}>{label}</Link>
-          ))}
-          <span className="status" role="status">{status}</span>
-          <button className="out" onClick={() => sb().auth.signOut()}>로그아웃</button>
-        </nav>
-        {children}
+      <div className="app">
+        <header className="side">
+          <div className="topbar">
+            <Link className="brand" href="/" aria-label="Sheepshank 메인으로">
+              <Knot /><span>Sheepshank</span>
+            </Link>
+            <button type="button" className="more" aria-label="메뉴 열기" onClick={() => menu.current?.showModal()}>
+              <Icon name="more" />
+            </button>
+          </div>
+          <nav className="pages" aria-label="페이지">
+            {TABS.map(([href, label, icon]) => (
+              <Link key={href} href={href} aria-current={path === href ? "page" : undefined}>
+                <Icon name={icon} /><span>{label}</span>
+              </Link>
+            ))}
+          </nav>
+          <div className="side-foot">
+            <span className={`status${tone}`} role="status">{status}</span>
+            <button type="button" className="out" onClick={logout}><Icon name="out" /><span>로그아웃</span></button>
+          </div>
+        </header>
+        <div className="wrap">{children}</div>
+        <dialog ref={menu} className="menu" aria-label="메뉴" onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }}>
+          <div className="menu-in">
+            <Link href="/about" onClick={() => menu.current?.close()}><Icon name="about" /><span>소개</span></Link>
+            <button type="button" onClick={logout}><Icon name="out" /><span>로그아웃</span></button>
+            <button type="button" className="close" onClick={() => menu.current?.close()}>닫기</button>
+          </div>
+        </dialog>
       </div>
     </Ctx.Provider>
   );
