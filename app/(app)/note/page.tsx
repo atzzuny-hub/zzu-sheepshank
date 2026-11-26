@@ -14,7 +14,7 @@ export default function NotePage() {
   const { uid, queue, setStatus } = useApp();
   const today = useMemo(todayParts, []);
   const [view, setView] = useState({ y: today.y, m: today.m });
-  const [pane, setPane] = useState<"note" | "habit">("note");
+  const [sel, setSel] = useState(today.d); // 폰의 달력에서 고른 날. 달을 넘겨도 같은 날짜를 고른 채로 둡니다
   const [habits, setHabits] = useState<Action[]>([]);
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [checks, setChecks] = useState<Set<string>>(new Set());
@@ -94,8 +94,12 @@ export default function NotePage() {
   const pts = Array.from({ length: last }, (_, i) => [x(count(i + 1)), (i + 0.5) * ROW, i + 1]);
   const days = Array.from({ length: total }, (_, i) => i + 1);
 
+  // 폰의 달력
+  const lead = new Date(view.y, view.m, 1).getDay(); // 1일 앞에 비워 둘 칸 수
+  const day = Math.min(sel, total), dayIsToday = isThis && day === today.d;
+
   return (
-    <section data-view={pane}>
+    <section>
       <header className="top">
         <div className="month">
           <button className="nav" onClick={() => move(-1)} aria-label="이전 달">‹</button>
@@ -109,15 +113,60 @@ export default function NotePage() {
           <li>이번 달 연속<b>{streak}일</b></li>
         </ul>
         <div className="tools">
-          <div className="seg" role="group" aria-label="보기 전환">
-            <button aria-pressed={pane === "note"} onClick={() => setPane("note")}>한 줄</button>
-            <button aria-pressed={pane === "habit"} onClick={() => setPane("habit")}>지킬 일</button>
-          </div>
           <OrderButton habits={habits} onChange={setHabits} />
           <Link className="btn" href="/plan">지킬 일 고르기</Link>
         </div>
       </header>
 
+      {/* 폰(860px 미만): 한 달 표 대신 달력에서 날을 고르고, 그날의 한 줄과 지킬 일을 바로 아래에서 고칩니다 */}
+      <div className="cal-view" inert={!ready}>
+        <div className="cal" role="group" aria-label={`${view.y}년 ${view.m + 1}월 달력`}>
+          {WD.map((w, i) => <span key={w} className={`wd${i === 0 ? " sun" : ""}`} aria-hidden="true">{w}</span>)}
+          {Array.from({ length: lead }, (_, i) => <span key={i} />)}
+          {days.map((d) => {
+            const c = count(d), has = !!(notes[d] ?? "").trim(); // 숫자는 그날 지킨 일의 수, 점은 한 줄을 적은 날
+            return (
+              <button key={d} type="button" aria-pressed={d === day} onClick={() => setSel(d)}
+                className={`${isThis && d === today.d ? "today" : ""}${d > last ? " future" : ""}`}
+                aria-label={`${view.m + 1}월 ${d}일 ${WD[(lead + d - 1) % 7]}요일${has ? ", 한 줄 있음" : ""}${c ? `, 지킨 일 ${c}개` : ""}`}>
+                <span className="n">{d}</span>
+                <span className={`m${habits.length > 0 && c === habits.length ? " full" : ""}`}>{has && <i />}{c > 0 && c}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <section className="blk dayp">
+          <h2>{view.m + 1}월 {day}일 <small>{WD[(lead + day - 1) % 7]}요일{dayIsToday ? " · 오늘" : ""}</small></h2>
+          <textarea className="dline" rows={3} maxLength={80} value={notes[day] ?? ""} aria-label={`${day}일 한 줄`}
+            placeholder={dayIsToday ? "오늘 기억하고 싶은 한 줄" : "이날 기억하고 싶은 한 줄"}
+            onChange={(e) => onNote(day, e.target.value.replace(/\n/g, " "))}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.blur(); } }} />
+          <h3>지킬 일 <small>{count(day)} / {habits.length}</small><span>이번 달</span></h3>
+          {habits.length ? (
+            <ul className="tlist">
+              {habits.map((h, i) => (
+                <li key={h.id}>
+                  <button type="button" className="tchk" aria-pressed={checks.has(`${day}|${h.id}`)}
+                    aria-label={`${h.text}, 이번 달 ${per[i]}번`} onClick={() => toggle(day, h.id)}>
+                    <span className="bx"><XMark /></span><span className="nm">{h.text}</span><small>{per[i]}</small>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="msg">지킬 일이 아직 없어요. <Link href="/plan">계획</Link>에서 가장 중요한 일에 별표를 눌러 보세요.</p>
+          )}
+        </section>
+
+        <section className="blk">
+          <h2>{view.m + 1}월 캐치프레이즈</h2>
+          <textarea className="cphrase" rows={3} maxLength={120} value={phrase} placeholder="이번 달 캐치프레이즈"
+            aria-label={`${view.m + 1}월 캐치프레이즈`} onChange={(e) => onPhrase(e.target.value)} />
+        </section>
+      </div>
+
+      {/* 넓은 화면(860px 이상): 한 달 표 */}
       <main className="sheet" inert={!ready} style={{ ["--n" as string]: n }}>
         <div className="r head">
           <div className="day" />
@@ -131,7 +180,7 @@ export default function NotePage() {
           </div>
           <div className="h-cnt">합</div>
           <div className="h-graph" ref={gref}>
-            <span className="cap">실천<span className="x"> 그래프</span></span>
+            <span className="cap">실천 그래프</span>
             {Array.from({ length: n + 1 }, (_, c) => {
               const odd = c % 2 === 1 && c !== n;
               return <span key={c} className={`tick${odd ? (n > 8 ? " odd minor" : " odd") : ""}`} style={{ left: x(c) }}>{c}</span>;
@@ -187,7 +236,7 @@ export default function NotePage() {
         </div>
       </main>
       {ready && habits.length === 0 && (
-        <p className="lead" style={{ marginTop: 16 }}>
+        <p className="lead sheet-lead" style={{ marginTop: 16 }}>
           지킬 일이 아직 없어요. <Link href="/plan">계획</Link>에서 가장 중요한 일에 별표를 누르면 여기에 칸이 생깁니다.
         </p>
       )}
