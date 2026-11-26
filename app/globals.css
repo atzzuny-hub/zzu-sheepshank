@@ -495,6 +495,52 @@ a.btn.primary { color: var(--paper); }
   .cal-view { display: block; }
 }
 
+/* time: 폰(860px 미만)에서는 시간표를 칠하는 대신, 한 일을 시작 시각과 길이로 적고 목록으로 봅니다 */
+.tm-log, .tm .p-hint { display: none; }
+.tm-line { position: relative; list-style: none; margin: 0 0 12px; padding: 0; }
+.tm-line::before { content: ""; position: absolute; left: 67px; top: 26px; bottom: 26px; width: 2px; background: var(--rule); }
+.tm-line button {
+  width: 100%; min-height: 52px; display: grid; grid-template-columns: 52px 14px minmax(0, 1fr) auto; align-items: center; gap: 0 9px;
+  padding: 4px 0; border: 0; border-radius: 8px; background: none; text-align: left;
+}
+.tm-line button:hover { background: color-mix(in srgb, var(--pen) 8%, transparent); }
+.tm-line time { display: grid; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tm-line time small { font-size: 10px; }
+.tm-line i { position: relative; width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 0 3px var(--panel); }
+.tm-line .nm { font-family: var(--hand); font-size: 23px; line-height: 1.15; overflow-wrap: anywhere; }
+.tm-line .len { padding-right: 2px; font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tm-add { width: 100%; min-height: 44px; }
+dialog.tm-sheet { padding: 18px 16px 16px; }
+.tm-form .lbl { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 6px; font-size: 12px; font-weight: 600; color: var(--muted); }
+.tm-form .lbl b { font-size: 14px; color: var(--ink); }
+.tm-form .lbl span { margin-left: auto; font-weight: 400; font-variant-numeric: tabular-nums; }
+.tm-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tm-chips .tm-pen { min-height: 40px; }
+.tm-form input[type="text"] {
+  width: 100%; margin-top: 8px; padding: 6px 2px; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; background: none;
+  color: var(--ink); font-family: var(--hand); font-size: 22px;
+}
+.tm-form input[type="text"]::placeholder { color: var(--muted); opacity: .8; }
+.tm-when, .tm-len { display: flex; gap: 6px; }
+.tm-when select {
+  flex: 1; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper);
+  color: var(--ink); font: inherit; font-size: 16px;
+}
+.tm-len button { flex: 1; min-width: 0; min-height: 44px; padding: 0 2px; border: 1px solid var(--rule); border-radius: 8px; background: none; font-size: 13px; white-space: nowrap; }
+.tm-len button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.tm-len button:disabled { opacity: .35; }
+.tm-form .msg { margin: 12px 0 0; color: var(--sun); }
+.tm-form .end { display: flex; gap: 8px; }
+@media (max-width: 859px) {
+  .tm-pens, .tm-grid, .tm .w-hint { display: none; }
+  .tm-log { display: block; order: -1; }
+  .tm .p-hint { display: inline; }
+  dialog.tm-sheet {
+    margin: auto 0 0; width: 100%; max-width: 100%; max-height: calc(100dvh - 48px); border-width: 1px 0 0; border-radius: 16px 16px 0 0;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ---------- 틀 ----------
    폰과 좁은 창: 위에 로고 줄(오른쪽에 메뉴 ⋯), 아래에 고정 탭바.
    넓은 창(1100px 이상): 왼쪽에 옆줄. 표가 좁아지지 않도록 859px 가 아니라 1100px 에서 나눕니다. */
