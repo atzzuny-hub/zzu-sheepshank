@@ -14,7 +14,7 @@ const FLOW: { href: string; icon: IconName; name: string; line: string; guide: s
   { href: "/time", icon: "time", name: "시간", line: "하루를 어떻게 썼는지 적어요",
     guide: "한 일마다 시작 시각과 길이를 남기면 무엇에 얼마나 썼는지 보입니다. 계획의 지킬 일을 불러와 적으면 그 일의 체크도 같이 됩니다." },
   { href: "/", icon: "home", name: "메인", line: "오늘의 실천을 한눈에 봐요",
-    guide: "오늘의 한 줄과 지킬 일, 이번 달 그래프와 영역별 실천율을 한 화면에서 봅니다. 매일 여기서 시작하면 됩니다." },
+    guide: "오늘 할 일과 한 줄, 실천 그래프, 계획, 모멘텀, 오늘 쓴 시간을 한 화면에서 봅니다. 매일 여기서 시작하면 됩니다." },
 ];
 
 export default function About({ loggedOut }: { loggedOut?: boolean }) {

@@ -2,11 +2,24 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/Shell";
-import { XMark } from "@/components/Knot";
-import { getJournal, getKeyActions, getMonth, getPlan, saveNote, setCheck } from "@/lib/data";
-import { WD, daysIn, todayParts, ymd, type Action, type Area, type Journal } from "@/lib/util";
+import Knot, { XMark } from "@/components/Knot";
+import Icon from "@/components/Icons";
+import NightSky from "@/components/NightSky";
+import RateGraph, { GRAPH_DAYS } from "@/components/RateGraph";
+import {
+  getChecksBetween, getJournal, getKeyActions, getMonth, getPlan, getTimelog, saveNote, setCheck, type TimeTask,
+} from "@/lib/data";
+import { FOCUS_AREA, NEXT, areaColor, clock, colorName, dayLayout, fmt, focusCells } from "@/lib/time";
+import { WD, daysIn, todayParts, ym, ymd, type Action, type Area, type Journal } from "@/lib/util";
 
-const NAMES = ["쏟아내기", "알아주기", "가르치기"];
+// 모멘텀 카드의 문구. 1·2·3 은 이제 쓸 단계, 0 은 세 단계를 다 쓴 날
+const WRITE = [
+  { name: "", title: "오늘의 글을 다 썼어요", sub: "세 단계를 모두 마쳤어요. 다시 읽거나 이어서 고칠 수 있어요." },
+  { name: "쏟아내기", title: "지금 마음에 있는 걸 쏟아내기", sub: "15분 동안 멈추지 않고 써 보세요. 정리하지 않아도 괜찮아요." },
+  { name: "알아주기", title: "쏟아낸 마음을 알아주기", sub: "쏟아낸 글을 따라 쓰며 “그랬구나” 하고 알아줘요. 고치지 않아도 괜찮아요." },
+  { name: "가르치기", title: "오늘 일을 매듭짓기", sub: "현자가 되어 마음을 바르게 고쳐먹고, 결론까지 써요." },
+];
+const LOGS = 5; // 오늘 시간 카드에 보여 주는 기록의 수. 더 많으면 가장 최근 것들만 보여 줍니다
 
 export default function Home() {
   const { uid, queue, setStatus } = useApp();
@@ -16,97 +29,152 @@ export default function Home() {
   const [areas, setAreas] = useState<Area[]>([]);
   const [habits, setHabits] = useState<Action[]>([]);
   const [future, setFuture] = useState("");
-  const [notes, setNotes] = useState<Record<number, string>>({});
-  const [checks, setChecks] = useState<Set<string>>(new Set());
   const [phrase, setPhrase] = useState("");
+  const [checks, setChecks] = useState<Set<string>>(new Set()); // "2026-11-27|<지킬 일 id>" 꼴. 그래프가 보는 날들의 체크
+  const [notes, setNotes] = useState<Record<number, string>>({}); // 이번 달의 한 줄
   const [j, setJ] = useState<Journal>({ pour: "", listen: "", teach: "" });
-  const [w, setW] = useState(0);
-  const box = useRef<HTMLDivElement>(null);
+  // 노트 카드: 달력이 보여 주는 달과 고른 날. 다른 달을 넘겨 보면 그 달의 한 줄을 따로 불러옵니다
+  const [view, setView] = useState({ y: t.y, m: t.m });
+  const [sel, setSel] = useState(t.d);
+  const [far, setFar] = useState<{ key: string; notes: Record<number, string> } | null>(null);
+  // 오늘 시간 카드와 집중 시간: 오늘의 시간 기록, 어제의 집중 시간(칸 수), 고른 영역의 색
+  const [log, setLog] = useState<{ tasks: TimeTask[]; slots: Record<string, string> } | null>(null);
+  const [prevFocus, setPrevFocus] = useState(0);
+  const [cat, setCat] = useState<string | null>(null);
+  const edited = useRef(false);
 
   useEffect(() => {
-    Promise.all([getPlan(), getMonth(t.y, t.m), getJournal(date), getKeyActions()])
-      .then(([p, mo, jr, keys]) => {
+    let live = true;
+    edited.current = false;
+    const from = new Date(t.y, t.m, t.d - GRAPH_DAYS + 1);
+    Promise.all([
+      getPlan(), getKeyActions(), getMonth(t.y, t.m), getJournal(date),
+      getChecksBetween(ymd(from.getFullYear(), from.getMonth(), from.getDate()), date),
+    ])
+      .then(([p, keys, mo, jr, cs]) => {
+        // 다른 화면에 다녀오면 다시 불러옵니다. 그 사이에 여기서 고친 게 있으면 늦게 온 값으로 덮지 않습니다
+        if (!live || edited.current) return;
         setAreas(p.areas); setHabits(keys); setFuture(p.future);
-        setNotes(mo.notes); setChecks(mo.checks); setPhrase(mo.phrase); setJ(jr); setReady(true);
+        setPhrase(mo.phrase); setNotes(mo.notes); setChecks(cs); setJ(jr); setReady(true);
       })
-      .catch(() => setStatus("불러오지 못했어요. 새로고침해 보세요."));
+      .catch(() => live && setStatus("불러오지 못했어요. 새로고침해 보세요."));
+    return () => { live = false; };
   }, [t, date, setStatus]);
+  // 시간 기록은 카드 두 군데에만 쓰여서, 못 불러와도 화면을 막지 않습니다
   useEffect(() => {
-    const el = box.current; if (!el) return;
-    const ro = new ResizeObserver(() => setW(el.clientWidth));
-    ro.observe(el); setW(el.clientWidth);
-    return () => ro.disconnect();
-  }, [ready]);
+    let live = true;
+    const y = new Date(t.y, t.m, t.d - 1); // 집중 시간을 견줄 어제
+    Promise.all([getTimelog(date), getTimelog(ymd(y.getFullYear(), y.getMonth(), y.getDate()))])
+      .then(([now, prev]) => { if (live) { setLog(now); setPrevFocus(focusCells(prev.tasks, prev.slots)); } })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [t, date]);
+  const thisMonth = view.y === t.y && view.m === t.m, vkey = ym(view.y, view.m);
+  useEffect(() => {
+    if (thisMonth) return;
+    let live = true;
+    getMonth(view.y, view.m)
+      .then((mo) => { if (live) setFar({ key: ym(view.y, view.m), notes: mo.notes }); })
+      .catch(() => live && setStatus("불러오지 못했어요. 새로고침해 보세요."));
+    return () => { live = false; };
+  }, [view, thisMonth, setStatus]);
 
   if (!ready) return null;
 
-  const count = (d: number) => habits.reduce((c, h) => c + (checks.has(`${d}|${h.id}`) ? 1 : 0), 0);
-  function onNote(v: string) {
-    setNotes((p) => ({ ...p, [t.d]: v }));
-    queue(`note:${date}`, () => saveNote(uid, date, v));
-  }
+  /* ----- 오늘 할 일 ----- */
+  const ids = habits.map((h) => h.id);
+  const done = ids.filter((id) => checks.has(`${date}|${id}`)).length; // 오늘 지킨 일의 수
   function toggle(id: string) {
-    const k = `${t.d}|${id}`, on = !checks.has(k);
+    const k = `${date}|${id}`, on = !checks.has(k);
+    edited.current = true;
     setChecks((p) => { const s = new Set(p); if (on) s.add(k); else s.delete(k); return s; });
     queue(`check:${date}:${id}`, () => setCheck(uid, date, id, on));
   }
 
-  // D-day
+  /* ----- 계획: 영역마다 오늘 지킨 일의 수와 지킬 일의 수 ----- */
+  const byArea = areas.map((a) => {
+    const mine = habits.filter((h) => h.area_id === a.id);
+    return { id: a.id, name: a.name || "이름 없는 영역", color: areaColor(a.name), n: mine.length, done: mine.filter((h) => checks.has(`${date}|${h.id}`)).length };
+  });
+
+  /* ----- 되고 싶은 날까지 ----- */
   const f = future ? new Date(`${future}T00:00:00`) : new Date(t.y + 1, 11, 31);
   const diff = Math.round((f.getTime() - new Date(t.y, t.m, t.d).getTime()) / 864e5);
   const dday = diff > 0 ? `D-${diff}` : diff === 0 ? "D-day" : `D+${-diff}`;
   const goal = `${f.getFullYear()}년 ${f.getMonth() + 1}월 ${f.getDate()}일의 나까지`;
-  const done = count(t.d); // 오늘 지킨 일의 수
 
-  // 모멘텀
-  const doneSteps = [j.pour, j.listen, j.teach].map((s) => !!s.trim());
-  const next = doneSteps.indexOf(false) + 1; // 0 이면 다 씀
+  /* ----- 노트 카드의 달력 ----- */
+  const total = daysIn(view.y, view.m), lead = new Date(view.y, view.m, 1).getDay(); // lead: 1일 앞에 비워 둘 칸 수
+  const day = Math.min(sel, total), dayDate = ymd(view.y, view.m, day), dayIsToday = thisMonth && day === t.d;
+  const cal = thisMonth ? notes : far?.key === vkey ? far.notes : null; // 다른 달은 다 불러올 때까지 null
+  const months = view.y * 12 + view.m - (t.y * 12 + t.m); // 이번 달에서 몇 달 떨어졌는지
+  function move(delta: number) {
+    const m = view.m + delta;
+    setView({ y: view.y + Math.floor(m / 12), m: ((m % 12) + 12) % 12 });
+  }
+  function onNote(v: string) {
+    edited.current = true;
+    if (thisMonth) setNotes((p) => ({ ...p, [day]: v }));
+    else setFar((p) => (p && p.key === vkey ? { ...p, notes: { ...p.notes, [day]: v } } : p));
+    queue(`note:${dayDate}`, () => saveNote(uid, dayDate, v));
+  }
 
-  // 그래프
-  const H = 170, pl = 26, pr = 12, pt = 14, pb = 24, N = daysIn(t.y, t.m), n = Math.max(habits.length, 1);
-  const x = (d: number) => pl + ((d - 1) / (N - 1)) * (w - pl - pr);
-  const y = (c: number) => H - pb - (c / n) * (H - pt - pb);
-  const pts = Array.from({ length: t.d }, (_, i) => [x(i + 1), y(count(i + 1)), i + 1]);
+  /* ----- 모멘텀 ----- */
+  const wrote = [j.pour, j.listen, j.teach].map((s) => !!s.trim());
+  const next = wrote.indexOf(false) + 1; // 이제 쓸 단계. 0 이면 세 단계를 다 썼습니다
+  const write = WRITE[next];
 
-  // 영역별 실천율
-  const rows = areas
-    .map((a) => {
-      const ids = habits.filter((h) => h.area_id === a.id).map((h) => h.id);
-      let c = 0;
-      for (let d = 1; d <= t.d; d++) ids.forEach((id) => { if (checks.has(`${d}|${id}`)) c++; });
-      return { id: a.id, name: a.name || "이름 없는 영역", n: ids.length, pc: ids.length ? Math.round((c / (ids.length * t.d)) * 100) : 0 };
-    })
-    .filter((r) => r.n > 0);
+  /* ----- 오늘 시간 ----- */
+  const lay = log && dayLayout(log.tasks, log.slots);
+  const colorOf = (id: string) => lay!.byId.get(id)!.color;
+  const cats = lay ? [...new Set(lay.blocks.map((b) => colorOf(b.id)))] : []; // 오늘 적은 영역의 색들 (적은 순서대로)
+  const pick = cat && cats.includes(cat) ? cat : null;
+  const blocks = lay ? lay.blocks.filter((b) => !pick || colorOf(b.id) === pick) : [];
+  const spent = blocks.reduce((n, b) => n + b.len, 0);
+  const focus = log ? focusCells(log.tasks, log.slots) : 0, gain = focus - prevFocus; // 어제보다 늘어난 집중 시간 (칸 수)
 
   return (
-    <section>
+    <section className="home">
       <div className="hero">
-        <div className="hrow">
-          <h1 className="hdate">{t.m + 1}월 {t.d}일 <small>{WD[new Date(t.y, t.m, t.d).getDay()]}요일</small></h1>
-          {/* 남은 날. 누르면 날짜를 정하는 계획으로 갑니다. 폰에서는 숫자만 보입니다 */}
-          <Link className="dpill" href="/plan" aria-label={`${goal} ${dday}. 계획에서 날짜 바꾸기`}><span>{goal}</span><b>{dday}</b></Link>
+        <div className="hhead">
+          <div className="hrow">
+            <h1 className="hdate">{t.m + 1}월 {t.d}일 <small>{WD[new Date(t.y, t.m, t.d).getDay()]}요일</small></h1>
+            {/* 되고 싶은 날까지 남은 날. 누르면 그 날짜를 정하는 계획으로 갑니다 */}
+            <Link className="dpill" href="/plan" title={goal} aria-label={`${goal} ${dday}. 계획에서 날짜 바꾸기`}>{dday}</Link>
+          </div>
+          <p className="motto">{phrase.trim() ? phrase : <Link href="/note">{t.m + 1}월 캐치프레이즈 적기</Link>}</p>
         </div>
-        <p className="motto">{phrase.trim() ? phrase : <Link href="/note">{t.m + 1}월 캐치프레이즈 적기</Link>}</p>
+        {/* 오늘의 숫자 두 장: 지킨 일, 집중 시간(어제와 견줌). 집중 시간은 시간 화면으로 이어집니다 */}
+        <div className="hstats">
+          <div className="blk hstat">
+            <span className="hs-ico ok"><Icon name="done" /></span>
+            <span className="lbl">오늘 실천</span>
+            <p className="hs-big">{done}<small>/ {habits.length}</small></p>
+            <div className="pbar" aria-hidden="true"><i style={{ width: `${habits.length ? (done / habits.length) * 100 : 0}%` }} /></div>
+          </div>
+          <Link className="blk hstat go" href="/time" aria-label={`집중 시간 ${log ? fmt(focus) : "불러오는 중"}. 시간에서 자세히 보기`}>
+            <span className="hs-ico gold"><Icon name="time" /></span>
+            <span className="lbl">집중 시간 <small>{FOCUS_AREA}</small></span>
+            <p className="hs-big">
+              {log ? fmt(focus) : "–"}
+              {log && gain !== 0 && <span className={`hgain${gain < 0 ? " down" : ""}`}>{gain > 0 ? "▲ +" : "▼ −"}{fmt(Math.abs(gain))}</span>}
+            </p>
+            <Icon name="bars" />
+          </Link>
+        </div>
       </div>
 
-      <div className="duo">
-        <div>
-          <section className="blk">
-            <h2>오늘의 한 줄</h2>
-            <textarea className="dline" rows={2} maxLength={80} value={notes[t.d] ?? ""} placeholder="오늘 기억하고 싶은 한 줄" aria-label="오늘의 한 줄"
-              onChange={(e) => onNote(e.target.value.replace(/\n/g, " "))}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.blur(); } }} />
-          </section>
-
-          <section className="blk">
-            <h2>오늘의 실천 {habits.length > 0 && <b className="hcount">{done} / {habits.length}</b>}</h2>
+      <div className="hbody">
+        <div className="hg hg1">
+          <section className="blk htodo">
+            <h2><Icon name="check" />오늘 할 일 {habits.length > 0 && <b className="hcount">{done} / {habits.length} 완료</b>}</h2>
             {habits.length ? (
               <>
                 <div className="pbar" aria-hidden="true"><i style={{ width: `${(done / habits.length) * 100}%` }} /></div>
                 <ul className="tlist">
                   {habits.map((h) => (
                     <li key={h.id}>
-                      <button type="button" className="tchk" aria-pressed={checks.has(`${t.d}|${h.id}`)} onClick={() => toggle(h.id)}>
+                      <button type="button" className="tchk" aria-pressed={checks.has(`${date}|${h.id}`)} onClick={() => toggle(h.id)}>
                         <span className="bx"><XMark /></span><span>{h.text}</span>
                       </button>
                     </li>
@@ -114,56 +182,127 @@ export default function Home() {
                 </ul>
               </>
             ) : (
-              <p className="msg">지킬 일이 아직 없어요. <Link href="/plan">계획</Link>에서 가장 중요한 일에 별표를 눌러 보세요.</p>
+              <p className="msg">지킬 일이 아직 없어요. 계획에서 가장 중요한 일에 별표를 누르면 여기에 올라와요.</p>
             )}
+            <Link className="btn hfull" href="/plan">+ 지킬 일 고르기</Link>
+          </section>
+
+          <section className="blk hnote">
+            <h2><Icon name="note" />노트 <Link href="/note">월간 보기 →</Link></h2>
+            <div className="hmonth">
+              <button type="button" className="nav" onClick={() => move(-1)} aria-label="이전 달">‹</button>
+              <b>{view.y !== t.y && `${view.y}년 `}{view.m + 1}월</b>
+              <button type="button" className="nav" onClick={() => move(1)} aria-label="다음 달">›</button>
+            </div>
+            <div className="cal mini" role="group" aria-label={`${view.y}년 ${view.m + 1}월 달력`} inert={!cal}>
+              {WD.map((w, i) => <span key={w} className={`wd${i === 0 ? " sun" : ""}`} aria-hidden="true">{w}</span>)}
+              {Array.from({ length: lead }, (_, i) => <span key={i} />)}
+              {Array.from({ length: total }, (_, i) => i + 1).map((d) => {
+                const has = !!(cal?.[d] ?? "").trim(); // 점은 한 줄을 적은 날
+                return (
+                  <button key={d} type="button" aria-pressed={d === day} onClick={() => setSel(d)}
+                    className={`${thisMonth && d === t.d ? "today" : ""}${months > 0 || (months === 0 && d > t.d) ? " future" : ""}`}
+                    aria-label={`${view.m + 1}월 ${d}일 ${WD[(lead + d - 1) % 7]}요일${has ? ", 한 줄 있음" : ""}`}>
+                    <span className="n">{d}</span><span className="m">{has && <i />}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <h3><Icon name="pen" />{dayIsToday ? "오늘의 기록" : "이날의 기록"}</h3>
+            <div className="hrec" inert={!cal}>
+              <p>{view.m + 1}월 {day}일 · {WD[(lead + day - 1) % 7]}요일</p>
+              <textarea className="dline" rows={2} maxLength={80} value={cal?.[day] ?? ""} aria-label={`${view.m + 1}월 ${day}일 한 줄`}
+                placeholder={dayIsToday ? "오늘 기억하고 싶은 한 줄" : "이날 기억하고 싶은 한 줄"}
+                onChange={(e) => onNote(e.target.value.replace(/\n/g, " "))}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.blur(); } }} />
+            </div>
+          </section>
+
+          <div className="hcol">
+            <section className="blk hgraph"><RateGraph ids={ids} checks={checks} today={t} /></section>
+            <section className="blk hplan">
+              <h2><Icon name="bars" />{f.getFullYear()}년 계획 <Link href="/plan">전체 보기 →</Link><small className="hsub">영역마다 오늘 지킨 일 / 지킬 일</small></h2>
+              {byArea.length ? (
+                <ul className="hareas">
+                  {byArea.map((a) => (
+                    <li key={a.id}>
+                      <i style={{ background: a.color }} /><span className="nm">{a.name}</span>
+                      {/* 지킬 일이 없는 영역은 숫자 대신 줄표. 다 지킨 영역은 숫자를 진하게 */}
+                      <b className={!a.n ? "none" : a.done === a.n ? "full" : undefined}>{a.n ? `${a.done}/${a.n}` : "–"}</b>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="msg">아직 영역이 없어요. <Link href="/plan">계획</Link>에서 되고 싶은 모습을 하나 적어 보세요.</p>
+              )}
+            </section>
+          </div>
+        </div>
+
+        <div className="hg hg2">
+          <section className="blk hmom">
+            <h2>
+              <Icon name="momentum" />모멘텀
+              <span className="hpill">{next ? `${next}단계 · ${write.name}` : "오늘 글 완료"}</span>
+              <small className="hsub">오늘도, 마음을 비워 보세요.</small>
+            </h2>
+            <div className="hm-top">
+              <div><h3>{write.title}</h3><p>{write.sub}</p></div>
+              {/* 꾸밈: 줄을 긋는 연필 */}
+              <svg className="hm-pen" viewBox="0 0 72 60" aria-hidden="true">
+                <path d="M4 50c7-7 11 5 17-2s6-13 12-6 4 9 10 3" />
+                <g transform="translate(45 44) rotate(-52)"><path d="M0 0 9-4H31a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3H9Z" /><path d="M9-4V4M27-4V4" /></g>
+              </svg>
+            </div>
+            <div className="hm-box">
+              {/* 15분은 쏟아내기에서만 잽니다. 그 뒤로는 몇 단계까지 썼는지를 보여 줍니다 */}
+              <p className="hm-big">{next === 1 ? "15:00" : <>{wrote.filter(Boolean).length}<small>/ 3 단계</small></>}</p>
+              <div className="hm-btns">
+                <Link className="btn primary" href={next === 1 ? "/momentum?step=1&start=1" : `/momentum?step=${next || 1}`}>
+                  <Icon name="play" />{next === 1 ? "시작하기" : next ? "이어서 쓰기" : "다시 보기"}
+                </Link>
+                <Link className="btn" href="/momentum#recent">지난 글</Link>
+              </div>
+            </div>
+          </section>
+
+          <section className="blk htime">
+            <h2><Icon name="time" />오늘 시간 {spent > 0 && <small className="hsum">기록한 시간 <b>{fmt(spent)}</b></small>}</h2>
+            {cats.length > 1 && (
+              <div className="hchips" role="group" aria-label="영역으로 추려 보기">
+                <button type="button" aria-pressed={!pick} onClick={() => setCat(null)}>전체</button>
+                {cats.map((c) => (
+                  <button key={c} type="button" aria-pressed={pick === c} onClick={() => setCat(c)}><i style={{ background: c }} />{colorName(c, areas)}</button>
+                ))}
+              </div>
+            )}
+            {blocks.length ? (
+              <ol className="hline">
+                {blocks.length > LOGS && <li className="hl-more"><Link href="/time">앞의 기록 {blocks.length - LOGS}개 더 보기</Link></li>}
+                {blocks.slice(-LOGS).map((b) => (
+                  <li key={b.from}>
+                    <time>{clock(b.from)}{b.from >= NEXT && <small>다음 날</small>}</time>
+                    <i style={{ background: colorOf(b.id) }} />
+                    <span className="nm">{lay!.byId.get(b.id)!.text || "이름 없음"}<small>({fmt(b.len)})</small></span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="msg">{log ? "오늘은 아직 적은 시간이 없어요." : "불러오는 중…"}</p>
+            )}
+            <Link className="btn hfull" href="/time">+ 기록 추가</Link>
+          </section>
+
+          {/* 소개로 가는 카드. 밤하늘은 소개 화면과 같은 그림입니다 */}
+          <section className="promo" aria-label="Sheepshank 소개">
+            <NightSky />
+            <div className="pr-brand"><Knot /><b>Sheepshank</b></div>
+            <p className="pr-tag">지금, 더 나은 내일을 위한 기록</p>
+            <p className="pr-lead">오늘을 기록하고, 내일을 준비하며,<br />조금 더 나은 방향으로 나아가요.</p>
+            <Link className="btn" href="/about">서비스 더 알아보기 →</Link>
           </section>
         </div>
-
-        <section className="blk">
-          <h2>모멘텀 <small>오늘의 15분 글쓰기</small></h2>
-          <ol className="msteps">
-            {NAMES.map((nm, i) => <li key={nm} className={doneSteps[i] ? "ok" : undefined}><i>{doneSteps[i] ? "✓" : ""}</i>{nm}</li>)}
-          </ol>
-          <Link className={`btn${next ? " primary" : ""}`} href={`/momentum?step=${next || 1}`} style={{ textDecoration: "none", display: "inline-block" }}>
-            {!next ? "오늘 쓴 글 다시 보기" : next === 1 ? "쏟아내기 시작" : `${NAMES[next - 1]} 이어서 쓰기`}
-          </Link>
-        </section>
       </div>
-
-      <section className="blk">
-        <h2>{t.m + 1}월 실천 그래프 <Link href="/note">노트에서 자세히 보기</Link></h2>
-        <div id="hgraph" ref={box}>
-          {w > 0 && (
-            <svg id="hsvg" width={w} height={H} role="img" aria-label="이번 달 날짜별로 지킨 일의 개수">
-              <line x1={pl} x2={w - pr} y1={y(0)} y2={y(0)} />
-              <line className="top" x1={pl} x2={w - pr} y1={y(n)} y2={y(n)} />
-              <text x={pl - 8} y={y(0) + 4} textAnchor="end">0</text>
-              <text x={pl - 8} y={y(n) + 4} textAnchor="end">{n}</text>
-              {Array.from({ length: N }, (_, i) => i + 1).filter((d) => d === 1 || d % 5 === 0)
-                .map((d) => <text key={d} x={x(d)} y={H - 6} textAnchor="middle">{d}</text>)}
-              {pts.length > 1 && <polyline points={pts.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ")} />}
-              {pts.map((p) => <circle key={p[2]} cx={p[0]} cy={p[1]} r={p[2] === t.d ? 5 : 3} className={p[2] === t.d ? "now" : undefined} />)}
-            </svg>
-          )}
-        </div>
-      </section>
-
-      <section className="blk">
-        <h2>영역별 실천율 <small>이번 달 1일부터 오늘까지</small></h2>
-        {rows.length ? (
-          <div className="rates">
-            {rows.map((r) => (
-              <div className="rrow" key={r.id}>
-                <div className="nm">{r.name}</div>
-                <div className="bar"><i style={{ width: `${r.pc}%` }} /></div>
-                <div className="pc">{r.pc}%</div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="msg">계획에서 별표로 뽑은 일이 생기면, 영역별로 얼마나 지켰는지 여기에 보여요.</p>
-        )}
-      </section>
     </section>
   );
 }

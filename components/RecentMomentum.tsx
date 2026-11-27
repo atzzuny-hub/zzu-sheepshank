@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "@/components/Shell";
 import { getRecentJournals } from "@/lib/data";
 import type { Journal } from "@/lib/util";
@@ -19,6 +19,7 @@ export default function RecentMomentum({ date, j }: { date: string; j: Journal |
   const { setStatus } = useApp();
   const [limit, setLimit] = useState(RECENT);
   const [rows, setRows] = useState<(Journal & { date: string })[] | null>(null);
+  const root = useRef<HTMLElement>(null);
 
   // 더 있는지 알려고 보여 줄 수보다 하나 더 불러옵니다
   useEffect(() => {
@@ -28,6 +29,12 @@ export default function RecentMomentum({ date, j }: { date: string; j: Journal |
       .catch(() => live && setStatus("불러오지 못했어요. 새로고침해 보세요."));
     return () => { live = false; };
   }, [date, limit, setStatus]);
+  // 메인의 '지난 글'로 들어오면(주소 끝이 #recent) 이 목록으로 내려옵니다.
+  // 위의 종이는 글 길이만큼 늘어나서, 목록과 그날의 글을 다 불러온 뒤에 자리를 잡습니다
+  const settled = !!rows && !!j;
+  useEffect(() => {
+    if (settled && window.location.hash === "#recent") root.current?.scrollIntoView({ block: "start" });
+  }, [settled]);
 
   // 지금 열려 있는 날은 화면의 글로 바꿔 넣고, 세 단계가 다 비어 있는 날은 뺍니다
   const all = [...(j ? [{ date, ...j }] : []), ...(rows ?? []).filter((r) => !j || r.date !== date)]
@@ -37,7 +44,7 @@ export default function RecentMomentum({ date, j }: { date: string; j: Journal |
   const open = limit > RECENT, more = all.length > limit;
 
   return (
-    <section className="blk recent">
+    <section className="blk recent" id="recent" ref={root}>
       <h2>
         최근 모멘텀 기록
         {(open || more) && <button type="button" onClick={() => setLimit(open ? RECENT : MORE)}>{open ? "접기" : "전체 보기 →"}</button>}

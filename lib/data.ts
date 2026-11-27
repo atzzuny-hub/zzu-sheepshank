@@ -70,6 +70,19 @@ export const setCheck = (uid: string, date: string, action_id: string, on: boole
     ? ok(sb().from("checks").upsert({ user_id: uid, date, action_id }))
     : ok(sb().from("checks").delete().eq("date", date).eq("action_id", action_id));
 
+// 날짜 구간에 체크된 지킬 일을 "2026-11-27|<지킬 일 id>" 꼴로 모읍니다. 메인의 오늘 할 일과 실천 그래프에 씁니다.
+// 한 번에 받을 수 있는 줄 수가 1000줄이라, 그보다 많으면 이어서 더 받습니다
+export async function getChecksBetween(from: string, to: string) {
+  const PAGE = 1000, set = new Set<string>();
+  for (let at = 0; ; at += PAGE) {
+    const rows = await ok(
+      sb().from("checks").select("date,action_id").gte("date", from).lte("date", to).order("date").order("action_id").range(at, at + PAGE - 1),
+    );
+    (rows ?? []).forEach((r) => set.add(`${r.date}|${r.action_id}`));
+    if (!rows || rows.length < PAGE) return set;
+  }
+}
+
 /* ---------- 모멘텀 ---------- */
 export async function getJournal(date: string): Promise<Journal> {
   const r = await ok(sb().from("journals").select("pour,listen,teach").eq("date", date).maybeSingle());

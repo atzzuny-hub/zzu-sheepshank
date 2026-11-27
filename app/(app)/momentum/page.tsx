@@ -42,6 +42,7 @@ function Momentum() {
   const [nudge, setNudge] = useState("");
   const lastType = useRef(0);
   const ta = useRef<HTMLTextAreaElement>(null);
+  const grab = useRef(false); // 다음에 화면을 그린 뒤 글 쓰는 종이에 커서를 놓을지
 
   const date = ymd(day.y, day.m, day.d);
   const isToday = day.y === today.y && day.m === today.m && day.d === today.d;
@@ -56,10 +57,29 @@ function Momentum() {
     let live = true;
     setReady(false);
     getJournal(date)
-      .then((r) => { if (live) { setJ(r); setReady(true); } })
+      .then((r) => {
+        if (!live) return;
+        setJ(r); setReady(true);
+        // 메인의 '시작하기'로 들어왔으면(주소에 start=1) 글을 불러오자마자 15분을 재기 시작합니다.
+        // 주소에서는 바로 지워서, 다른 화면에 다녀와도 다시 시작되지 않게 합니다
+        const q = new URLSearchParams(window.location.search);
+        if (q.get("start") !== "1") return;
+        q.delete("start");
+        window.history.replaceState(null, "", `?${q}`);
+        go(1); setLeft(900); setRunning(true);
+        lastType.current = Date.now(); grab.current = true;
+      })
       .catch(() => live && setStatus("불러오지 못했어요. 새로고침해 보세요."));
     return () => { live = false; };
   }, [date, setStatus]);
+  // 위에서 타이머를 켰으면, 화면이 다 그려진 뒤에 종이에 커서를 놓습니다 (폰에서는 종이를 위에 붙은 줄 바로 아래로 올립니다)
+  useEffect(() => {
+    if (!grab.current || !ready) return;
+    grab.current = false;
+    const t = ta.current, phone = window.matchMedia("(max-width: 859px)").matches;
+    if (phone) t?.scrollIntoView({ block: "start" });
+    t?.focus({ preventScroll: phone });
+  });
 
   // 종이가 글 길이만큼 늘어납니다
   useLayoutEffect(() => {

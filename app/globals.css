@@ -8,6 +8,7 @@
   --hl: rgba(255, 230, 70, .5);
   --sun: #B4483E;
   --up: #23875A;
+  --gold: #B7791F;
   --panel: #FFFFFF;
   --hand: "Nanum Pen Script", "Gowun Batang", "Apple SD Gothic Neo", "Malgun Gothic", cursive;
   --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
@@ -25,13 +26,13 @@
   :root:not([data-theme="light"]) {
     --paper: #131822; --grid: #1D2533; --rule: #303B4E; --ink: #E4E8F0;
     --pen: #9DB7FF; --muted: #8E98AC; --hl: rgba(220, 196, 50, .2);
-    --sun: #E08A80; --up: #5FCB8E; --panel: #1B2230; color-scheme: dark;
+    --sun: #E08A80; --up: #5FCB8E; --gold: #FFC533; --panel: #1B2230; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #131822; --grid: #1D2533; --rule: #303B4E; --ink: #E4E8F0;
   --pen: #9DB7FF; --muted: #8E98AC; --hl: rgba(220, 196, 50, .2);
-  --sun: #E08A80; --up: #5FCB8E; --panel: #1B2230; color-scheme: dark;
+  --sun: #E08A80; --up: #5FCB8E; --gold: #FFC533; --panel: #1B2230; color-scheme: dark;
 }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 *, *::before, *::after { box-sizing: border-box; }
@@ -214,21 +215,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 #links marker path { fill: var(--ink); stroke: none; }
 .empty { grid-column: 1 / -1; text-align: center; color: var(--muted); margin: 0; }
 
-/* home */
-.hero { margin: 4px 0 20px; }
-.hrow { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
-.hdate { margin: 0; font-family: var(--hand); font-weight: 400; font-size: 48px; line-height: 1.05; }
-.hdate small { font-size: .7em; }
-.dpill {
-  flex: none; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 999px;
-  background: var(--panel); color: var(--muted); font-size: 12px; text-decoration: none;
-}
-.dpill:hover { border-color: var(--ink); }
-.dpill b { color: var(--pen); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.motto { font-family: var(--hand); font-size: 30px; line-height: 1.2; margin: 0; color: var(--pen); white-space: pre-line; max-width: 30em; }
-.motto a { color: var(--muted); font-size: 24px; }
-.duo { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 20px; align-items: start; }
-/* 묶음 하나가 카드 한 장입니다 */
+/* 카드: 묶음 하나가 카드 한 장입니다. 여러 화면이 같이 씁니다 */
 .blk { margin-bottom: 20px; min-width: 0; padding: 16px 18px 18px; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--panel); }
 .blk h2 {
   font-family: var(--hand); font-weight: 400; font-size: 32px; line-height: 1.1; margin: 0 0 10px; padding-bottom: 6px;
@@ -250,24 +237,201 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .tchk svg { width: 20px; height: 20px; stroke: var(--pen); stroke-width: 2; stroke-linecap: round; fill: none; opacity: 0; }
 .tchk[aria-pressed="true"] svg { opacity: 1; }
 .tchk span:last-child { min-width: 0; overflow-wrap: anywhere; }
-.msteps { list-style: none; margin: 0 0 14px; padding: 0; }
-.msteps li { display: flex; align-items: baseline; gap: 10px; font-family: var(--hand); font-size: 24px; line-height: 1.5; color: var(--muted); }
-.msteps li.ok { color: var(--ink); }
-.msteps li i { font-style: normal; font-family: var(--sans); font-size: 14px; width: 1.2em; color: var(--pen); }
-#hgraph { display: block; color: inherit; text-decoration: none; }
-#hsvg { display: block; overflow: visible; }
-#hsvg polyline { fill: none; stroke: var(--ink); stroke-width: 1.5; stroke-linejoin: round; }
-#hsvg circle { fill: var(--ink); }
-#hsvg circle.now { fill: var(--pen); }
-#hsvg line { stroke: var(--rule); stroke-width: 1; }
-#hsvg line.top { stroke-dasharray: 2 4; }
-#hsvg text { fill: var(--muted); font-size: 11px; font-family: var(--sans); }
-.rates { display: grid; gap: 10px; }
-.rrow { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr) 44px; gap: 14px; align-items: center; }
-.rrow .nm { font-family: var(--hand); font-size: 24px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rrow .bar { height: 14px; border: 1.5px solid var(--ink); background: var(--paper); }
-.rrow .bar i { display: block; height: 100%; background: var(--pen); }
-.rrow .pc { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* home: 메인. 위에 날짜와 오늘의 숫자 두 장, 아래에 카드 일곱 장.
+   카드는 화면 영역(.main)이 1000px 이상이면 세 칸씩 두 줄, 그보다 좁으면 두 칸씩, 폰(860px 미만)에서는 한 줄로 놓입니다 */
+.hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px 24px; margin: 4px 0 18px; }
+.hhead { flex: 1 1 320px; min-width: 0; }
+.hrow { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+.hdate { margin: 0; padding-bottom: 2px; border-bottom: 3px solid var(--ink); font-family: var(--hand); font-weight: 400; font-size: 48px; line-height: 1.05; }
+.hdate small { font-size: .7em; }
+.dpill {
+  flex: none; display: inline-flex; align-items: center; min-height: 32px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 999px;
+  background: var(--panel); color: var(--pen); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; text-decoration: none;
+}
+.dpill:hover { border-color: var(--ink); }
+.motto { font-family: var(--hand); font-size: 30px; line-height: 1.2; margin: 0; color: var(--pen); white-space: pre-line; max-width: 30em; }
+.motto a { color: var(--muted); font-size: 24px; }
+/* 오늘의 숫자 두 장: 왼쪽에 둥근 아이콘, 그 옆에 이름과 큰 숫자 */
+.hstats { display: flex; gap: 12px; }
+.home .hstat { display: grid; grid-template-columns: 38px minmax(0, 1fr); align-items: center; gap: 0 12px; min-width: 168px; padding: 12px 16px; color: var(--ink); text-decoration: none; }
+.home .hstat.go { grid-template-columns: 38px minmax(0, 1fr) auto; min-width: 340px; }
+.hstat.go:hover { border-color: var(--ink); }
+.hs-ico { grid-row: 1 / span 2; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; }
+.hs-ico.ok { color: var(--up); background: color-mix(in srgb, var(--up) 14%, transparent); }
+.hs-ico.gold { color: var(--gold); background: color-mix(in srgb, var(--gold) 16%, transparent); }
+.hstat .lbl { font-size: 12px; font-weight: 600; color: var(--muted); }
+.hstat .lbl small { font-size: 12px; font-weight: 400; }
+.hs-big { grid-column: 2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 0; font-family: var(--hand); font-size: 34px; line-height: 1; white-space: nowrap; }
+.hs-big small { font-size: .62em; color: var(--muted); }
+.hstat .pbar { grid-column: 1 / -1; height: 8px; margin: 10px 0 0; }
+.hstat > .ico { grid-column: 3; grid-row: 1 / span 2; color: var(--muted); }
+
+.hbody, .hg { display: grid; gap: 14px; }
+.hg { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.hcol { display: contents; }
+.home .blk { margin: 0; }
+.hbody .blk { display: flex; flex-direction: column; }
+/* 카드 머리: 아이콘과 이름, 오른쪽 끝에 숫자나 링크. 다른 화면의 카드와 달리 밑줄이 없습니다 */
+.home .blk h2 { flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 10px; padding: 0; border: 0; font-size: 28px; }
+.home .blk h2 > .ico { width: 22px; height: 22px; color: var(--pen); }
+.home .blk h2 a { margin: -14px -8px -14px auto; padding: 14px 8px; text-decoration: none; }
+.home .blk h2 a:hover { color: var(--ink); }
+.home .blk h2 .hsub { flex-basis: 100%; }
+.home .blk h3 { display: flex; align-items: center; gap: 6px; margin: 12px 0 6px; font-family: var(--hand); font-weight: 400; font-size: 23px; line-height: 1.1; }
+.home .blk h3 .ico { width: 18px; height: 18px; color: var(--pen); }
+/* 카드 맨 아래에 붙는 넓은 버튼 */
+.home .hfull { display: block; margin-top: auto; min-height: 40px; padding: 9px 14px; text-align: center; }
+.home .hfull:hover { border-color: var(--ink); }
+
+/* 오늘 할 일: 줄마다 옅은 바탕. 지킨 일은 흐리게 줄을 긋습니다 */
+.htodo .tlist { grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 4px 0 14px; }
+.htodo .tchk { min-height: 42px; padding: 4px 10px; border-radius: 8px; background: var(--paper); }
+.htodo .tchk:hover { background: color-mix(in srgb, var(--pen) 10%, var(--paper)); }
+.htodo .tchk[aria-pressed="true"] span:last-child { color: var(--muted); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.htodo .msg { margin: 4px 0 14px; }
+.htodo .tchk:focus-visible { outline-offset: -2px; }
+/* 넓은 화면(860px 이상): 오늘 할 일은 줄의 높이를 정하지 않습니다(contain: size). 옆 카드들의 높이에 맞추고,
+   지킬 일이 많으면 목록만 카드 안에서 스크롤합니다. 목록 아래 끝은 옅게 사라지게 해서 더 있다는 것을 보여 줍니다 */
+@media (min-width: 860px) {
+  .htodo { contain: size; }
+  .htodo .tlist {
+    flex: 1 1 0; min-height: 0; overflow-y: auto; align-content: start; margin-bottom: 4px; padding-bottom: 18px;
+    scrollbar-width: thin; scrollbar-color: var(--rule) transparent;
+    -webkit-mask: linear-gradient(#000 calc(100% - 22px), transparent); mask: linear-gradient(#000 calc(100% - 22px), transparent);
+  }
+}
+
+/* 노트: 작은 달력에서 날을 고르면 아래에 그날의 한 줄이 나옵니다 (달력의 기본 모양은 아래 note 부분의 .cal) */
+.hmonth { display: flex; align-items: center; justify-content: center; gap: 6px; margin: -4px 0 2px; }
+.hmonth b { min-width: 3.4em; text-align: center; font-family: var(--hand); font-weight: 400; font-size: 26px; line-height: 1; }
+.hmonth .nav { width: 34px; height: 34px; font-size: 20px; }
+.cal.mini { flex: 1; margin: 0; grid-template-rows: auto; grid-auto-rows: minmax(min-content, 1fr); }
+.cal.mini[inert], .hrec[inert] { opacity: .55; }
+.cal.mini .wd { padding: 2px 0 4px; }
+.cal.mini button { min-height: 34px; padding: 2px 0 0; gap: 0; align-content: center; border-radius: 8px; }
+.cal.mini .n { width: 26px; height: 26px; font-size: 13px; }
+.cal.mini button:hover .n { background: var(--grid); }
+.cal.mini button[aria-pressed="true"] .n { background: var(--pen); }
+.cal.mini .m { height: 5px; }
+.cal.mini .m i { width: 4px; height: 4px; }
+.hrec { padding: 8px 12px 6px; border-radius: 10px; background: var(--paper); }
+.hrec:focus-within { outline: 2px solid var(--pen); outline-offset: 1px; }
+.hrec p { margin: 0; font-size: 12px; color: var(--muted); }
+.hrec .dline { min-height: 34px; padding: 2px 0; border: 0; border-radius: 0; outline: none; }
+
+/* 실천 그래프: 기간을 고르는 단추와, 날마다의 실천율을 이은 선 */
+.seg { margin-left: auto; display: inline-flex; padding: 2px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); }
+.seg button { min-width: 38px; height: 24px; padding: 0 8px; border: 0; border-radius: 999px; background: none; font-family: var(--sans); font-size: 12px; line-height: 1; color: var(--muted); }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--pen); color: var(--paper); font-weight: 600; }
+.rg { position: relative; flex: 1; min-width: 0; min-height: 160px; }
+.rg svg { position: absolute; inset: 0; display: block; overflow: visible; }
+.rg line { stroke: var(--rule); stroke-width: 1; }
+.rg line.grid { stroke-dasharray: 2 4; }
+.rg text { fill: var(--muted); font-family: var(--sans); font-size: 11px; font-variant-numeric: tabular-nums; }
+.rg polyline { fill: none; stroke: var(--pen); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.rg .a { stop-color: var(--pen); stop-opacity: .28; }
+.rg .b { stop-color: var(--pen); stop-opacity: 0; }
+.rg circle { fill: var(--panel); stroke: var(--pen); stroke-width: 1.8; }
+.rg circle.now { fill: var(--pen); stroke: var(--panel); stroke-width: 2; }
+.rg .tag rect { fill: var(--pen); }
+.rg .tag text { fill: var(--paper); font-size: 12px; font-weight: 600; }
+
+/* 계획: 영역마다 색 점과 이름, 오른쪽에 오늘 지킨 일 / 지킬 일 */
+.hareas { flex: 1; display: grid; align-content: space-evenly; list-style: none; margin: 0; padding: 6px 14px; border-radius: 10px; background: var(--paper); }
+.hareas li { display: flex; align-items: center; gap: 10px; min-height: 38px; }
+.hareas i { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+.hareas .nm { flex: 1; min-width: 0; font-family: var(--hand); font-size: 23px; line-height: 1.15; overflow-wrap: anywhere; }
+.hareas b { flex: none; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hareas b.full { color: var(--pen); }
+.hareas b.none { font-weight: 400; color: var(--muted); }
+
+/* 모멘텀: 이제 쓸 단계의 안내와, 15분(또는 몇 단계까지 썼는지), 쓰러 가는 단추 */
+.hpill { margin-left: auto; padding: 4px 10px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); font-family: var(--sans); font-size: 12px; line-height: 1.3; color: var(--pen); white-space: nowrap; }
+.hm-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
+.hm-top > div { flex: 1; min-width: 0; }
+.home .hm-top h3 { margin: 0 0 4px; font-size: 26px; }
+.hm-top p { margin: 0; font-size: 13px; color: var(--muted); word-break: keep-all; }
+.hm-pen { flex: none; width: 66px; height: auto; margin-top: -2px; fill: none; stroke: var(--muted); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.hm-box { flex: 1; display: grid; align-content: center; padding: 12px 14px 14px; border: 1px solid var(--rule); border-radius: 12px; background: var(--paper); }
+.hm-big { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin: 0 0 10px; font-size: 44px; font-weight: 500; line-height: 1.1; letter-spacing: .02em; font-variant-numeric: tabular-nums; }
+.hm-big small { font-size: 14px; font-weight: 400; letter-spacing: 0; color: var(--muted); }
+.hm-btns { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 8px; }
+.home .hm-btns .btn { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
+.home .hm-btns .btn.primary { background: var(--pen); border-color: var(--pen); color: var(--paper); font-weight: 600; }
+.hm-btns .ico { width: 16px; height: 16px; }
+
+/* 오늘 시간: 영역으로 추리는 단추와, 오늘 적은 기록을 시각순으로 */
+.hsum { margin-left: auto; }
+.hsum b { margin-left: 4px; font-size: 14px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.hchips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.hchips button { display: inline-flex; align-items: center; gap: 6px; min-height: 28px; padding: 0 12px; border: 1px solid var(--rule); border-radius: 999px; background: none; font-size: 12px; color: var(--muted); }
+.hchips button:hover { border-color: var(--ink); }
+.hchips button i { width: 8px; height: 8px; border-radius: 50%; }
+.hchips button[aria-pressed="true"] { background: var(--pen); border-color: var(--pen); color: var(--paper); font-weight: 600; }
+.hline { position: relative; list-style: none; margin: 0 0 12px; padding: 0; }
+.hline::before { content: ""; position: absolute; left: 58px; top: 20px; bottom: 20px; width: 2px; background: var(--rule); }
+.hline li { display: grid; grid-template-columns: 44px 12px minmax(0, 1fr); align-items: center; gap: 0 9px; min-height: 46px; }
+.hline time { display: grid; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hline time small { font-size: 10px; }
+.hline i { position: relative; width: 12px; height: 12px; border-radius: 50%; box-shadow: 0 0 0 3px var(--panel); }
+.hline .nm { font-family: var(--hand); font-size: 22px; line-height: 1.1; overflow-wrap: anywhere; }
+.hline .nm small { display: block; font-family: var(--sans); font-size: 11px; line-height: 1.3; color: var(--muted); }
+.hline .hl-more { display: block; min-height: 0; padding: 0 0 6px 65px; font-size: 12px; }
+.hl-more a { color: var(--muted); }
+.htime .msg { margin: 4px 0 14px; }
+
+/* 소개로 가는 카드. 밤하늘은 소개 화면과 같은 그림(.ab-*)을 작게 줄여 씁니다. 그림이 늘 어두워서 색은 고정입니다 */
+.promo {
+  grid-column: 1 / -1; position: relative; overflow: hidden; display: grid; justify-items: center; align-content: center; gap: 4px;
+  min-height: 236px; padding: 20px 16px 58px; border: 1px solid var(--rule); border-radius: var(--radius);
+  background: linear-gradient(180deg, #0C1230 0%, #171F4B 46%, #2B2E68 100%); color: #EEF1FA; text-align: center;
+}
+.promo > svg { position: absolute; pointer-events: none; }
+.promo > :not(svg) { position: relative; }
+.promo .ab-stars { inset: 0 0 auto auto; width: max(100%, 640px); height: auto; aspect-ratio: 1200 / 420; }
+.promo .ab-hills { height: 72px; }
+.promo .ab-trees { width: 92px; bottom: 6px; }
+.promo .ab-trees.ab-l { left: -4px; }
+.promo .ab-trees.ab-r { right: -4px; }
+.pr-brand { display: flex; align-items: center; gap: 10px; }
+.pr-brand svg { width: 64px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.pr-brand b { font-family: var(--hand); font-weight: 400; font-size: 36px; line-height: 1; }
+.pr-tag { margin: 2px 0 0; font-family: var(--hand); font-size: 22px; line-height: 1.2; color: #A9BEFF; }
+.pr-lead { margin: 0 0 8px; font-size: 12px; line-height: 1.6; color: #C9D2EE; word-break: keep-all; }
+.home .promo .btn { min-height: 36px; padding: 8px 18px; border-color: rgba(238, 241, 250, .45); background: rgba(12, 18, 48, .5); color: #EEF1FA; }
+.home .promo .btn:hover { border-color: #EEF1FA; }
+
+@container (min-width: 1000px) {
+  .hg1 { grid-template-columns: minmax(0, 30fr) minmax(0, 28fr) minmax(0, 40fr); }
+  .hg2 { grid-template-columns: minmax(0, 35fr) minmax(0, 31fr) minmax(0, 32fr); }
+  .hcol { display: grid; gap: 14px; grid-template-rows: 1fr auto; }
+  .promo { grid-column: auto; }
+}
+@media (max-width: 859px) {
+  .hero { gap: 10px; margin-bottom: 12px; }
+  .hdate { font-size: 38px; }
+  .dpill { min-height: 40px; }
+  .motto { font-size: 24px; }
+  .hstats { width: 100%; gap: 10px; }
+  .home .hstat, .home .hstat.go { flex: 1; min-width: 0; grid-template-columns: 34px minmax(0, 1fr); gap: 0 10px; padding: 10px 12px; }
+  .home .hstat.go { flex: 1.35; }
+  .hstat > .ico { display: none; }
+  .hs-ico { width: 34px; height: 34px; }
+  .hs-big { font-size: 30px; }
+  /* 한 줄로 놓을 때는 쓰는 카드(할 일, 노트, 모멘텀, 시간)를 먼저, 보는 카드(그래프, 계획, 소개)를 뒤에 둡니다 */
+  .hbody { display: flex; flex-direction: column; gap: 12px; }
+  .hg { display: contents; }
+  .htodo { order: 1; } .hnote { order: 2; } .hmom { order: 3; } .htime { order: 4; } .hgraph { order: 5; } .hplan { order: 6; } .promo { order: 7; }
+  .home .hfull { min-height: 44px; padding: 11px 14px; }
+  .hmonth .nav { width: 44px; height: 44px; }
+  .cal.mini button { min-height: 44px; }
+  .cal.mini .n { width: 30px; height: 30px; font-size: 14px; }
+  .seg button { min-width: 48px; height: 40px; }
+  .hchips button { min-height: 40px; }
+  .home .promo .btn { min-height: 44px; padding: 12px 20px; }
+}
 
 /* about */
 .ab-hero { margin: 0 0 32px; }
@@ -289,8 +453,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .ab-hills .far { fill: #242B62; }
 .ab-hills .mid { fill: #181E47; }
 .ab-trees { bottom: 14px; width: 236px; height: auto; fill: #0A0F28; }
-.ab-trees.l { left: -6px; }
-.ab-trees.r { right: -6px; transform: scaleX(-1); }
+.ab-trees.ab-l { left: -6px; }
+.ab-trees.ab-r { right: -6px; transform: scaleX(-1); }
 .ab-brand { display: flex; align-items: center; justify-content: center; gap: 20px; }
 .ab-brand .ab-knot { width: 132px; margin: 0; stroke: currentColor; stroke-width: 1.5; }
 .ab-knot { display: block; width: min(100%, 460px); height: auto; margin: 0 0 12px -6px; fill: none; stroke: var(--ink); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
@@ -429,13 +593,7 @@ dialog p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
   .pair { grid-template-columns: minmax(0, 1fr); }
   .paper { font-size: 21px; padding: 0 12px; }
   .timer { font-size: 19px; }
-  .hdate { font-size: 38px; }
-  .dpill span { display: none; }
-  .motto { font-size: 24px; }
-  .duo { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .tchk { min-height: 48px; }
-  .rrow { grid-template-columns: minmax(0, 1fr) 44px; gap: 2px 10px; }
-  .rrow .nm { grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) { .chk svg, .pbar i { transition: none; } }
 
@@ -504,7 +662,7 @@ a.btn.primary { color: var(--paper); }
 
 .tm-import { margin-top: 14px; }
 /* momentum: 화면 아래의 최근 기록. 날짜, 글의 첫 줄, 어느 단계까지 썼는지 */
-.blk.recent { margin: 28px 0 0; }
+.blk.recent { margin: 28px 0 0; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 12px); }
 /* '전체 보기'는 글씨가 작아서, 보이는 모습은 그대로 두고 누르는 자리만 넓힙니다 (안쪽 여백만큼 바깥 여백을 뺍니다) */
 .blk.recent h2 button { margin: -16px -10px -16px auto; padding: 16px 10px; border: 0; background: none; font-family: var(--sans); font-size: 12px; color: var(--muted); text-decoration: underline; }
 .mlist { list-style: none; margin: 0; padding: 0; }
@@ -520,6 +678,7 @@ a.btn.primary { color: var(--paper); }
 .mlist .badge { margin: 0 8px; padding: 3px 10px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); font-size: 12px; white-space: nowrap; }
 .mmore { display: block; width: 100%; min-height: 44px; margin-top: 12px; }
 @media (max-width: 859px) {
+  .blk.recent { scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 60px); }
   .mlist a { grid-template-columns: 74px minmax(0, 1fr) auto; min-height: 48px; }
   .mlist .tx { font-size: 21px; }
 }
@@ -669,8 +828,8 @@ dialog.tm-sheet { padding: 18px 16px 16px; }
 .tm-stats h2 small { font-weight: 400; }
 .tm-big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 12px; font-family: var(--hand); font-size: 42px; line-height: 1; }
 .tm-big small { font-size: .62em; color: var(--muted); }
-.tm-gain { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--up); white-space: nowrap; }
-.tm-gain.down { color: var(--muted); }
+.tm-gain, .hgain { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--up); white-space: nowrap; }
+.tm-gain.down, .hgain.down { color: var(--muted); }
 .tm-pie { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0 20px; }
 .tm-pie h2 { grid-column: 1 / -1; }
 .tm-donut { position: relative; width: 112px; height: 112px; }

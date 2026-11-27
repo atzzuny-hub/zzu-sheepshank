@@ -2,38 +2,11 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/Shell";
 import { getChecksOn, getKeyActions, getPlan, getTimelog, saveTimelog, setCheck, type TimeTask } from "@/lib/data";
+import { ALL, COLORS, FOCUS, FOCUS_AREA, GRAY, NEXT, PER, START, areaColor, clock, colorName, dayLayout, fmt, focusCells, hourOf, type Block } from "@/lib/time";
 import { WD, p2, todayParts, ymd, type Area } from "@/lib/util";
 
-const START = 4; // 하루가 시작하는 시각 (새벽 4시부터 다음 날 새벽 3시까지)
-const PER = 6; // 한 시간을 10분씩 여섯 칸으로
-const ALL = 24 * PER; // 하루의 칸 수
-const NEXT = (24 - START) * PER; // 이 칸부터는 다음 날 새벽입니다
-const GREEN = "#5FCB8E", YELLOW = "#FFC533", BLUE = "#8FB8F0", RED = "#FF8F8F", GRAY = "#B9C0C8";
-const COLORS = [GREEN, YELLOW, BLUE, RED, GRAY];
-// 계획 탭의 영역 이름마다 정해 둔 색. 영역 이름을 바꾸면 여기도 같이 바꿔 주세요.
-const AREA_COLORS: Record<string, string> = {
-  "건강관리": GREEN,
-  "꾸준한성장": YELLOW,
-  "경제적성장": BLUE,
-  "자기계발": RED,
-};
-const areaColor = (name: string) => AREA_COLORS[name.replace(/\s/g, "")] ?? GRAY;
-// 집중 시간으로 세는 영역. 이 영역의 색으로 적은 시간을 집중 시간으로 봅니다
-const FOCUS_AREA = "자기계발", FOCUS = areaColor(FOCUS_AREA);
 const RING = 2 * Math.PI * 46; // 시간 통계 고리의 둘레 (반지름 46)
 const ERASE = "__erase";
-const fmt = (cells: number) => {
-  const h = Math.floor(cells / PER), m = (cells % PER) * 10;
-  return h ? `${h}시간${m ? ` ${m}분` : ""}` : `${m}분`;
-};
-// 하루치 기록에서 집중 시간으로 세는 칸의 수 (집중 영역의 색으로 적은 칸)
-function focusCells(tasks: TimeTask[], slots: Record<string, string>) {
-  const focus = new Set(tasks.filter((t) => t.color === FOCUS).map((t) => t.id));
-  return Object.values(slots).filter((id) => focus.has(id)).length;
-}
-const hourOf = (i: number) => (START + Math.floor(i / PER)) % 24;
-const clock = (i: number) => `${p2(hourOf(i))}:${p2((i % PER) * 10)}`; // 칸 번호를 07:30 같은 시각으로
-type Block = { id: string; from: number; len: number }; // 같은 일로 이어진 칸 한 덩어리
 type Form = { task: string; from: number; len: number; orig?: Block }; // 폰에서 적거나 고치는 기록 하나
 
 export default function TimePage() {
@@ -180,18 +153,8 @@ export default function TimePage() {
   }
 
   /* ----- 그릴 준비 ----- */
-  const byId = new Map(tasks.map((t) => [t.id, t]));
-  const at = (i: number) => (byId.has(slots[i]) ? slots[i] : "");
-  const totals = new Map<string, number>();
-  let used = 0;
-  for (let i = 0; i < ALL; i++) { const id = at(i); if (id) { totals.set(id, (totals.get(id) ?? 0) + 1); used++; } }
-  // 같은 일로 이어진 칸을 한 덩어리로 묶습니다. 폰의 기록 목록과 시간표의 이름표가 같이 씁니다
-  const blocks: Block[] = [];
-  for (let i = 0; i < ALL; ) {
-    const id = at(i); let e = i + 1;
-    if (id) { while (e < ALL && at(e) === id) e++; blocks.push({ id, from: i, len: e - i }); }
-    i = e;
-  }
+  // 일마다 쓴 칸 수와, 같은 일로 이어진 칸을 한 덩어리로 묶은 것. 폰의 기록 목록과 시간표의 이름표가 같이 씁니다
+  const { byId, at, totals, used, blocks } = dayLayout(tasks, slots);
   // 덩어리마다 가장 긴 줄에 이름을 한 번만 적습니다
   const labels: Record<number, { col: number; len: number; text: string }[]> = {};
   for (const b of blocks) {
@@ -211,13 +174,11 @@ export default function TimePage() {
   const focus = tasks.reduce((n, t) => n + (t.color === FOCUS ? totals.get(t.id) ?? 0 : 0), 0);
   const gain = focus - prevFocus; // 전날보다 늘어난 집중 시간 (칸 수)
   // 시간 통계는 색으로 묶습니다. 색의 이름은 그 색을 쓰는 영역의 이름이고, 회색과 주인 없는 색은 기타입니다
-  const nameOf = (color: string) => (color === GRAY ? "기타"
-    : plan.areas.find((a) => areaColor(a.name) === color)?.name || Object.keys(AREA_COLORS).find((k) => AREA_COLORS[k] === color) || "기타");
   const byColor = new Map<string, number>(COLORS.map((c) => [c, 0]));
   tasks.forEach((t) => byColor.set(t.color, (byColor.get(t.color) ?? 0) + (totals.get(t.id) ?? 0)));
   let turned = 0; // 고리에서 앞의 조각들이 차지한 길이
   const pie = [...byColor].filter(([, cells]) => cells).map(([color, cells]) => {
-    const len = (cells / used) * RING, part = { color, cells, name: nameOf(color), len, off: turned };
+    const len = (cells / used) * RING, part = { color, cells, name: colorName(color, plan.areas), len, off: turned };
     turned += len;
     return part;
   });
