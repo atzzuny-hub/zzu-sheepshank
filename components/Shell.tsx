@@ -63,7 +63,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     );
   if (uid === undefined) return <div className="wrap"><p className="status">불러오는 중…</p></div>;
   if (uid === null)
-    return path === "/" ? <div className="wrap"><About loggedOut /></div> : null;
+    return path === "/" ? <div className="main"><div className="wrap"><About loggedOut /></div></div> : null;
 
   // 폰에서는 저장 상태가 탭바 위에 작게 뜹니다. 저장됨과 안내는 잠깐 보였다 사라지고, 실패는 다시 저장될 때까지 남습니다.
   const tone = !status ? "" : status === "저장됨" ? " ok" : status === "저장 중…" ? " busy" : status.includes("못했어요") ? " fail" : " note";
@@ -93,7 +93,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <button type="button" className="out" onClick={logout}><Icon name="out" /><span>로그아웃</span></button>
           </div>
         </header>
-        <div className="wrap">{children}</div>
+        {/* .main 은 옆줄을 뺀 화면 영역 전체. 소개의 밤하늘처럼 이 폭을 끝까지 채우는 그림이 기준으로 삼습니다 */}
+        <div className="main"><div className="wrap">{children}</div></div>
         <dialog ref={menu} className="menu" aria-label="메뉴" onClick={(e) => { if (e.target === e.currentTarget) e.currentTarget.close(); }}>
           <div className="menu-in">
             <Link href="/about" onClick={() => menu.current?.close()}><Icon name="about" /><span>소개</span></Link>

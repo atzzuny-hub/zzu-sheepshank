@@ -1,5 +1,5 @@
-// 메뉴에 쓰는 선 아이콘. 매듭 로고와 같은 굵기의 선으로 직접 그렸습니다.
-export type IconName = "home" | "note" | "plan" | "momentum" | "time" | "about" | "more" | "out";
+// 메뉴와 버튼에 쓰는 선 아이콘. 매듭 로고와 같은 굵기의 선으로 직접 그렸습니다.
+export type IconName = "home" | "note" | "plan" | "momentum" | "time" | "about" | "more" | "out" | "play" | "book";
 
 const SHAPES: Record<IconName, React.ReactNode> = {
   home: <><path d="M3.5 11 12 4l8.5 7" /><path d="M5.5 9.5V20h13V9.5" /><path d="M10 20v-5.5h4V20" /></>,
@@ -15,6 +15,8 @@ const SHAPES: Record<IconName, React.ReactNode> = {
   about: <><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5.5" /><circle className="dot" cx="12" cy="7.8" r="1" /></>,
   more: <><circle className="dot" cx="5.5" cy="12" r="1.5" /><circle className="dot" cx="12" cy="12" r="1.5" /><circle className="dot" cx="18.5" cy="12" r="1.5" /></>,
   out: <><path d="M10 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H10" /><path d="M14.5 8l4 4-4 4" /><path d="M18.5 12H10" /></>,
+  play: <path className="dot" d="M8.5 5.5v13l10.5-6.5z" />,
+  book: <><path d="M12 6.6c-1.8-1.3-4-1.9-6.5-1.7v12.6c2.5-.2 4.7.4 6.5 1.7 1.8-1.3 4-1.9 6.5-1.7V4.9c-2.5-.2-4.7.4-6.5 1.7z" /><path d="M12 6.6v12.6" /></>,
 };
 
 export default function Icon({ name }: { name: IconName }) {

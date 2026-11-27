@@ -53,7 +53,9 @@ body::before {
 button { font: inherit; color: inherit; cursor: pointer; }
 :focus-visible { outline: 2px solid var(--pen); outline-offset: 1px; }
 
-.wrap { max-width: 1180px; margin: 0 auto; padding: 20px 16px 48px; }
+/* .main: 옆줄을 뺀 화면 영역 전체. 안쪽에서 100cqw 로 이 폭을 끝까지 채울 수 있습니다 (소개의 밤하늘) */
+.main { min-width: 0; container-type: inline-size; }
+.wrap { --pt: 20px; max-width: 1180px; margin: 0 auto; padding: var(--pt) 16px 48px; }
 
 /* top */
 .top { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 24px; margin-bottom: 20px; }
@@ -267,19 +269,56 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .rrow .pc { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 /* about */
-.ab-hero { margin: 8px 0 44px; }
+.ab-hero { margin: 0 0 32px; }
+/* 맨 위의 밤하늘. 테두리 없이 화면 영역(.main)을 좌우 끝까지, 위로는 맨 위까지 채웁니다.
+   아래쪽은 언덕 모양(--ab-edge)으로 잘라서 그 밑으로 페이지 바탕이 그대로 이어집니다.
+   그림이 늘 어두워서 이 안의 색은 테마 변수 대신 고정 색을 씁니다 */
+.ab-sky {
+  --ab-edge: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 400' preserveAspectRatio='none'%3E%3Cpath d='M0 0H1200V366C1080 350 900 392 700 384S300 348 0 378Z'/%3E%3C/svg%3E");
+  position: relative; overflow: hidden; display: grid; justify-items: center; align-content: center;
+  width: 100cqw; margin: calc(-1 * var(--pt)) 0 0 calc(50% - 50cqw); min-height: 460px; padding: 64px 20px 136px;
+  background: linear-gradient(180deg, #0C1230 0%, #171F4B 46%, #2B2E68 100%); color: #EEF1FA; text-align: center;
+  -webkit-mask: var(--ab-edge) center / 100% 100% no-repeat; mask: var(--ab-edge) center / 100% 100% no-repeat;
+}
+.ab-sky > svg { position: absolute; pointer-events: none; }
+.ab-sky > :not(svg) { position: relative; }
+.ab-stars { inset: 0; width: 100%; height: 100%; fill: #fff; }
+.ab-stars .cloud { opacity: .07; }
+.ab-hills { left: 0; bottom: 0; width: 100%; height: 150px; }
+.ab-hills .far { fill: #242B62; }
+.ab-hills .mid { fill: #181E47; }
+.ab-trees { bottom: 14px; width: 236px; height: auto; fill: #0A0F28; }
+.ab-trees.l { left: -6px; }
+.ab-trees.r { right: -6px; transform: scaleX(-1); }
+.ab-brand { display: flex; align-items: center; justify-content: center; gap: 20px; }
+.ab-brand .ab-knot { width: 132px; margin: 0; stroke: currentColor; stroke-width: 1.5; }
 .ab-knot { display: block; width: min(100%, 460px); height: auto; margin: 0 0 12px -6px; fill: none; stroke: var(--ink); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; overflow: visible; }
 .ab-knot path, .ab-knot ellipse { stroke-dasharray: 1; stroke-dashoffset: 1; animation: ab-draw 1.4s ease-out forwards; }
 .ab-knot ellipse { animation-duration: .5s; animation-delay: 1.2s; }
 .ab-knot ellipse + ellipse { animation-delay: 1.5s; }
 @keyframes ab-draw { to { stroke-dashoffset: 0; } }
-.ab-hero h1 { font-family: var(--hand); font-weight: 400; font-size: 84px; line-height: 1; margin: 0; }
-.ab-tag { font-family: var(--hand); font-size: 34px; line-height: 1.2; margin: 4px 0 16px; color: var(--pen); }
-.ab-lead { max-width: 56ch; margin: 0 0 20px; font-size: 15px; line-height: 1.75; background: var(--paper); }
-.ab-cta { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
-.ab-cta .btn { text-decoration: none; padding: 10px 16px; font-size: 14px; color: var(--ink); }
-.ab-cta .btn.primary { color: var(--paper); }
-.ab-lead, .ab-flow p, .ab-roles p { word-break: keep-all; }
+.ab-hero h1 { font-family: var(--hand); font-weight: 400; font-size: 68px; line-height: 1; margin: 0; }
+.ab-tag { font-family: var(--hand); font-size: 32px; line-height: 1.2; margin: 10px 0 14px; color: #A9BEFF; }
+.ab-lead { margin: 0; font-family: var(--hand); font-size: 24px; line-height: 1.45; }
+.ab-lead span { display: block; }
+.ab-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; margin: 22px 0 0; }
+.ab-cta .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; padding: 0 30px; font-size: 15px; font-weight: 500; color: var(--ink); text-decoration: none; }
+.ab-cta .btn.primary { background: var(--pen); border-color: var(--pen); color: var(--paper); }
+.ab-cta .btn .ico { width: 18px; height: 18px; }
+.ab-lead, .ab-flow p, .ab-roles p, .ab-story, .ab-cards span { word-break: keep-all; }
+.ab-sec { margin-bottom: 24px; }
+.ab-sec h2 { margin: 0 0 12px; font-family: var(--hand); font-weight: 400; font-size: 32px; line-height: 1.1; }
+.ab-cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+.ab-cards a {
+  height: 100%; display: grid; justify-items: center; align-content: start; gap: 6px; padding: 18px 10px 16px;
+  border: 1px solid var(--rule); border-radius: var(--radius); background: var(--panel); color: var(--ink); text-align: center; text-decoration: none;
+}
+.ab-cards a:hover { border-color: var(--ink); }
+.ab-cards .ico { width: 28px; height: 28px; color: var(--pen); }
+.ab-cards b { font-family: var(--hand); font-weight: 400; font-size: 30px; line-height: 1.1; }
+.ab-cards span { font-size: 13px; color: var(--muted); }
+#guide { scroll-margin-top: 12px; }
+.ab-story { max-width: 62ch; margin: 0; line-height: 1.75; }
 .ab-flow { list-style: none; margin: 0; padding: 0; counter-reset: f; }
 .ab-flow li {
   counter-increment: f; display: grid; grid-template-columns: 28px 120px minmax(0, 1fr) auto; gap: 16px; align-items: baseline;
@@ -297,8 +336,19 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .ab-roles p { margin: 0; }
 .ab-note { color: var(--muted); margin: 0; }
 @media (max-width: 859px) {
-  .ab-hero h1 { font-size: 60px; }
-  .ab-tag { font-size: 28px; }
+  .ab-sky { min-height: 390px; padding: 44px 14px 112px; }
+  .ab-hills { height: 118px; }
+  .ab-trees { width: 128px; bottom: 10px; }
+  .ab-brand { gap: 12px; }
+  .ab-brand .ab-knot { width: 84px; }
+  .ab-hero h1 { font-size: 44px; }
+  .ab-tag { font-size: 25px; margin: 8px 0 10px; }
+  .ab-lead { font-size: 20px; }
+  .ab-lead span { display: inline; }
+  .ab-cta { gap: 10px; }
+  .ab-cta .btn { flex: 1; padding: 0 12px; white-space: nowrap; }
+  .ab-cards { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .ab-cards a { min-height: 56px; grid-template-columns: 28px auto minmax(0, 1fr); justify-items: start; align-items: center; align-content: center; gap: 12px; padding: 8px 14px; text-align: left; }
   .ab-flow li { grid-template-columns: 20px minmax(0, 1fr); gap: 4px 10px; }
   .ab-flow p, .ab-flow a { grid-column: 2; }
   .ab-roles { grid-template-columns: minmax(0, 1fr); }
@@ -364,7 +414,7 @@ dialog p { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
 .dlg-actions { display: flex; gap: 8px; justify-content: space-between; margin-top: 16px; }
 
 @media (max-width: 859px) {
-  .wrap { padding: 12px 10px 40px; }
+  .wrap { --pt: 12px; padding: var(--pt) 10px 40px; }
   .month h1 { font-size: 44px; line-height: 48px; }
   .stats { gap: 14px; order: 3; width: 100%; margin: 0; }
   #map { grid-template-columns: minmax(0, 1fr); gap: 28px; }
@@ -613,7 +663,7 @@ dialog.tm-sheet { padding: 18px 16px 16px; }
 .ico { flex: none; width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .ico .dot { fill: currentColor; stroke: none; }
 
-.app .wrap { padding-top: 10px; padding-bottom: calc(48px + var(--tab-h)); }
+.app .wrap { --pt: 10px; padding-top: var(--pt); padding-bottom: calc(48px + var(--tab-h)); }
 .topbar { display: flex; align-items: center; justify-content: space-between; max-width: 1180px; margin: 0 auto; padding: 12px 16px 0; }
 .topbar .brand { margin-bottom: 0; }
 .more { width: 44px; height: 44px; margin-right: -10px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); display: grid; place-items: center; }
@@ -659,9 +709,12 @@ dialog.menu { padding: 0; width: min(340px, calc(100vw - 32px)); }
   dialog.menu { margin: auto 0 0; width: 100%; max-width: 100%; border-width: 1px 0 0; border-radius: 16px 16px 0 0; padding-bottom: env(safe-area-inset-bottom, 0px); }
 }
 
+@media (max-width: 1099px) {
+  .app .ab-sky { background: linear-gradient(180deg, transparent 0, #0C1230 44px, #171F4B 50%, #2B2E68 100%); }
+}
 @media (min-width: 1100px) {
   .app { display: grid; grid-template-columns: var(--side-w) minmax(0, 1fr); }
-  .app .wrap { width: 100%; padding: 28px 28px 56px; }
+  .app .wrap { --pt: 28px; width: 100%; padding: var(--pt) 28px 56px; }
   .side {
     position: sticky; top: 0; align-self: start; height: 100dvh; overflow-y: auto;
     display: flex; flex-direction: column; padding: 26px 14px 16px; border-right: 1px solid var(--rule);
