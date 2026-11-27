@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Sheepshank",
-  description: "팽팽할 때만 버티는 매듭. 계획하고, 매일 한 줄 적고, 글로 매듭짓는 노트.",
+  description: "지금, 더 나은 내일을 위한 기록. 오늘을 기록하고, 내일을 준비하며, 조금 더 나은 방향으로 나아가도록 돕는 개인 성장 기록 서비스.",
   icons: { icon: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🪢</text></svg>" },
 };
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover" };
