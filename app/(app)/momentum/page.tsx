@@ -80,6 +80,16 @@ function Momentum() {
   }, [left, running]);
 
   function go(s: number) { setStep(s); setNudge(""); if (s !== 1) setRunning(false); }
+  function next() { go(step + 1); window.scrollTo(0, 0); }
+  const timerLabel = running ? "잠깐 멈춤" : left === 0 ? "15분 지남" : left === 900 ? "15분 시작" : "이어서";
+  // 시작하면 바로 쓸 수 있게 종이에 커서를 놓습니다. 폰에서는 종이가 위에 붙은 줄 바로 아래에 오도록 먼저 올려 둡니다
+  function toggleTimer() {
+    lastType.current = Date.now();
+    const t = ta.current, phone = window.matchMedia("(max-width: 859px)").matches;
+    if (!running && phone) t?.scrollIntoView({ block: "start" });
+    setRunning(!running);
+    t?.focus({ preventScroll: phone });
+  }
   function moveDay(delta: number) {
     // 빠르게 여러 번 눌러도 건너뛰지 않도록, 화면이 아니라 지금 주소의 날짜에서 옮깁니다
     const cur = dayFrom(new URLSearchParams(window.location.search).get("date"), today);
@@ -117,12 +127,9 @@ function Momentum() {
           <button className="nav" onClick={() => moveDay(1)} disabled={isToday} aria-label="다음 날">›</button>
         </div>
         {step === 1 && (
-          <div className="tools">
+          <div className="tools wtimer">
             <span className={`timer${left === 0 ? " done" : ""}`}>{p2(Math.floor(left / 60))}:{p2(left % 60)}</span>
-            <button className="btn primary" disabled={left === 0}
-              onClick={() => { lastType.current = Date.now(); setRunning(!running); ta.current?.focus(); }}>
-              {running ? "잠깐 멈춤" : left === 0 ? "15분 지남" : left === 900 ? "15분 시작" : "이어서"}
-            </button>
+            <button className="btn primary" disabled={left === 0} onClick={toggleTimer}>{timerLabel}</button>
             <button className="btn" onClick={() => { setRunning(false); setLeft(900); }}>처음부터</button>
           </div>
         )}
@@ -137,11 +144,30 @@ function Momentum() {
       </div>
 
       <div id="wbody" inert={!ready}>
+        {/* 폰(860px 미만): 글을 쓰느라 화면이 내려가도 위에 붙어 있는 줄. 남은 시간과 글자 수, 한마디가 여기 나옵니다 */}
+        <div className="wbar">
+          {step === 1 ? (
+            <>
+              <span className={`timer${left === 0 ? " done" : ""}`}>{p2(Math.floor(left / 60))}:{p2(left % 60)}</span>
+              <button className="btn primary" disabled={left === 0} onClick={toggleTimer}>{timerLabel}</button>
+              {left < 900 && !running && <button className="btn" onClick={() => setLeft(900)}>처음부터</button>}
+            </>
+          ) : (
+            <b>{step} {st.name}</b>
+          )}
+          <span className="wcnt">{text.length}자</span>
+          {step < 3 && <button className="btn" onClick={next}>다음</button>}
+          {nudge && <span className="nudge" role="status">{nudge}</span>}
+        </div>
         <p className="guide">{st.guide}</p>
         {step === 1 && paper}
         {step === 2 && (
           <div className="pair">
-            <div><p className="sub">쏟아낸 글</p>{orig(j.pour, "아직 쏟아낸 글이 없어요. 1단계에서 먼저 적어 주세요.")}</div>
+            {/* 폰에서는 쓰는 동안 위에 붙어 있고, 접었다 펼 수 있습니다 */}
+            <details className="src" open>
+              <summary>쏟아낸 글</summary>
+              {orig(j.pour, "아직 쏟아낸 글이 없어요. 1단계에서 먼저 적어 주세요.")}
+            </details>
             <div><p className="sub">알아주는 글</p>{paper}</div>
           </div>
         )}
@@ -160,7 +186,7 @@ function Momentum() {
         <div className="wfoot">
           <span>{text.length}자</span>
           <span className="nudge" role="status">{nudge}</span>
-          {step < 3 && <button className="btn" onClick={() => { go(step + 1); window.scrollTo(0, 0); }}>다음 단계로</button>}
+          {step < 3 && <button className="btn" onClick={next}>다음 단계로</button>}
         </div>
       </div>
     </section>
