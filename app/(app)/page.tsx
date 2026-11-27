@@ -55,6 +55,8 @@ export default function Home() {
   const f = future ? new Date(`${future}T00:00:00`) : new Date(t.y + 1, 11, 31);
   const diff = Math.round((f.getTime() - new Date(t.y, t.m, t.d).getTime()) / 864e5);
   const dday = diff > 0 ? `D-${diff}` : diff === 0 ? "D-day" : `D+${-diff}`;
+  const goal = `${f.getFullYear()}년 ${f.getMonth() + 1}월 ${f.getDate()}일의 나까지`;
+  const done = count(t.d); // 오늘 지킨 일의 수
 
   // 모멘텀
   const doneSteps = [j.pour, j.listen, j.teach].map((s) => !!s.trim());
@@ -79,29 +81,43 @@ export default function Home() {
   return (
     <section>
       <div className="hero">
+        <div className="hrow">
+          <h1 className="hdate">{t.m + 1}월 {t.d}일 <small>{WD[new Date(t.y, t.m, t.d).getDay()]}요일</small></h1>
+          {/* 남은 날. 누르면 날짜를 정하는 계획으로 갑니다. 폰에서는 숫자만 보입니다 */}
+          <Link className="dpill" href="/plan" aria-label={`${goal} ${dday}. 계획에서 날짜 바꾸기`}><span>{goal}</span><b>{dday}</b></Link>
+        </div>
         <p className="motto">{phrase.trim() ? phrase : <Link href="/note">{t.m + 1}월 캐치프레이즈 적기</Link>}</p>
-        <p className="dday">{f.getFullYear()}년 {f.getMonth() + 1}월 {f.getDate()}일의 나까지<b>{dday}</b></p>
       </div>
 
       <div className="duo">
-        <section className="blk">
-          <h2>오늘 <small>{t.m + 1}월 {t.d}일 {WD[new Date(t.y, t.m, t.d).getDay()]}요일</small></h2>
-          <input className="hline" type="text" maxLength={80} value={notes[t.d] ?? ""} placeholder="오늘 기억하고 싶은 한 줄"
-            aria-label="오늘의 한 줄" onChange={(e) => onNote(e.target.value)} />
-          {habits.length ? (
-            <ul className="tlist">
-              {habits.map((h) => (
-                <li key={h.id}>
-                  <button type="button" className="tchk" aria-pressed={checks.has(`${t.d}|${h.id}`)} onClick={() => toggle(h.id)}>
-                    <span className="bx"><XMark /></span><span>{h.text}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="msg">지킬 일이 아직 없어요. <Link href="/plan">계획</Link>에서 가장 중요한 일에 별표를 눌러 보세요.</p>
-          )}
-        </section>
+        <div>
+          <section className="blk">
+            <h2>오늘의 한 줄</h2>
+            <textarea className="dline" rows={2} maxLength={80} value={notes[t.d] ?? ""} placeholder="오늘 기억하고 싶은 한 줄" aria-label="오늘의 한 줄"
+              onChange={(e) => onNote(e.target.value.replace(/\n/g, " "))}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent.isComposing) { e.preventDefault(); e.currentTarget.blur(); } }} />
+          </section>
+
+          <section className="blk">
+            <h2>오늘의 실천 {habits.length > 0 && <b className="hcount">{done} / {habits.length}</b>}</h2>
+            {habits.length ? (
+              <>
+                <div className="pbar" aria-hidden="true"><i style={{ width: `${(done / habits.length) * 100}%` }} /></div>
+                <ul className="tlist">
+                  {habits.map((h) => (
+                    <li key={h.id}>
+                      <button type="button" className="tchk" aria-pressed={checks.has(`${t.d}|${h.id}`)} onClick={() => toggle(h.id)}>
+                        <span className="bx"><XMark /></span><span>{h.text}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="msg">지킬 일이 아직 없어요. <Link href="/plan">계획</Link>에서 가장 중요한 일에 별표를 눌러 보세요.</p>
+            )}
+          </section>
+        </div>
 
         <section className="blk">
           <h2>모멘텀 <small>오늘의 15분 글쓰기</small></h2>
