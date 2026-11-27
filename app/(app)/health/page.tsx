@@ -76,9 +76,11 @@ export default function HealthPage() {
   const toGoal = wLast && goals.weight_goal != null ? r1(wLast.value - goals.weight_goal) : null; // 양수면 줄여야 할, 음수면 늘려야 할 무게
   const closer = toGoal != null && wDelta !== 0 && Math.abs(toGoal) < Math.abs(toGoal - wDelta); // 앞의 기록보다 목표에 가까워졌는지
   const wToday = newestFirst(W.filter((r) => r.date === today));
-  const wTip = !wLast ? "몸무게를 적으면 변화가 선으로 보여요."
+  const wGoal = goals.weight_goal != null ? `${goals.weight_goal.toFixed(1)}kg` : ""; // 정해 둔 목표 몸무게 (없으면 빈칸)
+  // 목표는 정했는데 몸무게를 아직 적지 않았을 수도, 그 반대일 수도 있어서 둘을 따로 봅니다
+  const wTip = !wLast ? (wGoal ? `몸무게를 적으면 목표 ${wGoal}까지 남은 무게가 보여요.` : "몸무게를 적으면 변화가 선으로 보여요.")
     : toGoal == null ? "목표 몸무게를 정하면 남은 무게가 여기에 보여요."
-    : toGoal === 0 ? "목표 몸무게에 닿았어요." : `목표 ${goals.weight_goal!.toFixed(1)}kg까지 ${Math.abs(toGoal).toFixed(1)}kg 남았어요.`;
+    : toGoal === 0 ? "목표 몸무게에 닿았어요." : `목표 ${wGoal}까지 ${Math.abs(toGoal).toFixed(1)}kg 남았어요.`;
 
   /* ----- 운동: 시간 화면에서 운동 영역의 색으로 적은 시간 (10분이 한 칸) ----- */
   const moveBy = new Map((logs ?? []).map((l) => [l.date, cellsOf(l.tasks, l.slots, MOVE)]));
@@ -199,7 +201,7 @@ export default function HealthPage() {
               <Ring ratio={wLast && goals.weight_goal ? Math.min(wLast.value, goals.weight_goal) / Math.max(wLast.value, goals.weight_goal) : 0}>
                 {wLast ? <>{wLast.value.toFixed(1)}<small>kg</small></> : "–"}
               </Ring>
-              <figcaption>목표까지<small>({toGoal == null ? "목표 없음" : toGoal === 0 ? "닿았어요" : `${signed(-toGoal, 1)}kg`})</small></figcaption>
+              <figcaption>목표까지<small>({!wGoal ? "목표 없음" : toGoal == null ? `목표 ${wGoal}` : toGoal === 0 ? "닿았어요" : `${signed(-toGoal, 1)}kg`})</small></figcaption>
             </figure>
             <figure>
               <Ring ratio={goals.move_goal ? weekly / goals.move_goal : 0} tone="violet">{logs ? <>{weekly.toFixed(1)}<small>h</small></> : "–"}</Ring>
