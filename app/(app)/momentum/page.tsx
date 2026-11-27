@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useApp } from "@/components/Shell";
-import { RecentMomentum } from "@/components/MomentumList";
+import RecentMomentum from "@/components/RecentMomentum";
 import { getJournal, saveJournal } from "@/lib/data";
 import { WD, p2, todayParts, ymd, type Journal } from "@/lib/util";
 
@@ -32,7 +32,7 @@ function Momentum() {
   const today = useMemo(todayParts, []);
   const sp = useSearchParams();
   const start = Math.min(3, Math.max(1, Number(sp.get("step")) || 1));
-  // 보여 줄 날은 주소가 정합니다. 그래서 노트의 목록에서 누른 날도, ‹ › 로 옮긴 날도 주소만 보면 알 수 있습니다.
+  // 보여 줄 날은 주소가 정합니다. 그래서 아래 목록에서 누른 날도, ‹ › 로 옮긴 날도 주소만 보면 알 수 있습니다.
   const day = dayFrom(sp.get("date"), today);
   const [step, setStep] = useState(start);
   const [j, setJ] = useState<Journal>(EMPTY);

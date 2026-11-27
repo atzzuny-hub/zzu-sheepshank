@@ -503,30 +503,26 @@ a.btn.primary { color: var(--paper); }
 @media (max-width: 859px) { .tm { grid-template-columns: minmax(0, 1fr); gap: 0; } }
 
 .tm-import { margin-top: 14px; }
-/* note: 그 달에 쓴 모멘텀 글 목록 */
-.blk.mom { margin: 24px 0 0; }
+/* momentum: 화면 아래의 최근 기록. 날짜, 글의 첫 줄, 어느 단계까지 썼는지 */
+.blk.recent { margin: 28px 0 0; }
+/* '전체 보기'는 글씨가 작아서, 보이는 모습은 그대로 두고 누르는 자리만 넓힙니다 (안쪽 여백만큼 바깥 여백을 뺍니다) */
+.blk.recent h2 button { margin: -16px -10px -16px auto; padding: 16px 10px; border: 0; background: none; font-family: var(--sans); font-size: 12px; color: var(--muted); text-decoration: underline; }
 .mlist { list-style: none; margin: 0; padding: 0; }
 .mlist a {
-  display: grid; grid-template-columns: var(--c-day) minmax(0, 1fr) auto; align-items: center;
+  display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; align-items: center;
   min-height: var(--row); border-bottom: 1px solid var(--rule); color: var(--ink); text-decoration: none;
 }
 .mlist a:hover { background: color-mix(in srgb, var(--pen) 8%, transparent); }
 .mlist a:focus-visible { outline-offset: -2px; }
-.mlist .tx { padding: 0 8px; font-family: var(--hand); font-size: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mlist .st { padding: 0 8px; font-size: 12px; color: var(--muted); white-space: nowrap; }
-@media (max-width: 859px) {
-  .mlist a { grid-template-columns: var(--c-day) minmax(0, 1fr); padding: 6px 0; }
-  .mlist .tx { font-size: 21px; }
-  .mlist .st { grid-column: 2; }
-}
-
-/* momentum: 화면 아래의 최근 기록. 날짜, 글의 첫 줄, 어느 단계까지 썼는지 */
-.blk.recent { margin: 28px 0 0; }
-.recent .mlist a { grid-template-columns: 84px minmax(0, 1fr) auto; padding: 0; }
 .mlist a[aria-current] { background: color-mix(in srgb, var(--pen) 12%, transparent); }
 .mlist .dt { padding-left: 8px; font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.mlist .tx { padding: 0 8px; font-family: var(--hand); font-size: 23px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mlist .badge { margin: 0 8px; padding: 3px 10px; border: 1px solid var(--rule); border-radius: 999px; background: var(--paper); font-size: 12px; white-space: nowrap; }
-@media (max-width: 859px) { .recent .mlist a { grid-template-columns: 74px minmax(0, 1fr) auto; min-height: 48px; } }
+.mmore { display: block; width: 100%; min-height: 44px; margin-top: 12px; }
+@media (max-width: 859px) {
+  .mlist a { grid-template-columns: 74px minmax(0, 1fr) auto; min-height: 48px; }
+  .mlist .tx { font-size: 21px; }
+}
 
 /* note: 폰(860px 미만)에서는 한 달 표 대신 달력에서 날을 고르고, 그날의 한 줄과 지킬 일을 아래 카드에서 고칩니다 */
 .cal-view { display: none; }

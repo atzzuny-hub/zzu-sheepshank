@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/Shell";
 import { XMark } from "@/components/Knot";
 import OrderButton from "@/components/OrderButton";
-import MomentumList from "@/components/MomentumList";
 import { getKeyActions, getMonth, saveNote, savePhrase, setCheck } from "@/lib/data";
 import { WD, daysIn, todayParts, ym, ymd, type Action } from "@/lib/util";
 
@@ -240,7 +239,6 @@ export default function NotePage() {
           지킬 일이 아직 없어요. <Link href="/plan">계획</Link>에서 가장 중요한 일에 별표를 누르면 여기에 칸이 생깁니다.
         </p>
       )}
-      <MomentumList y={view.y} m={view.m} />
     </section>
   );
 }

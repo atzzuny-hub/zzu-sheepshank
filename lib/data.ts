@@ -80,14 +80,6 @@ export const saveJournal = (uid: string, date: string, j: Journal) =>
     ? ok(sb().from("journals").upsert({ user_id: uid, date, ...j, updated_at: new Date().toISOString() }))
     : ok(sb().from("journals").delete().eq("date", date));
 
-// 한 달 동안 모멘텀 글을 쓴 날들 (날짜순). 노트의 표 아래 목록에 씁니다.
-export async function getJournalsIn(y: number, m: number): Promise<(Journal & { d: number })[]> {
-  const rows = await ok(
-    sb().from("journals").select("date,pour,listen,teach")
-      .gte("date", ymd(y, m, 1)).lte("date", ymd(y, m, daysIn(y, m))).order("date"),
-  );
-  return (rows ?? []).map((r) => ({ d: +String(r.date).slice(8, 10), pour: r.pour ?? "", listen: r.listen ?? "", teach: r.teach ?? "" }));
-}
 // 가장 최근에 모멘텀 글을 쓴 날들 (최근 날짜부터 몇 개만). 모멘텀 화면 아래의 목록에 씁니다.
 export async function getRecentJournals(limit: number): Promise<(Journal & { date: string })[]> {
   const rows = await ok(sb().from("journals").select("date,pour,listen,teach").order("date", { ascending: false }).limit(limit));
