@@ -1035,6 +1035,14 @@ dialog.tm-sheet:has(.he-form) { padding: 22px 22px 20px; }
 .pages a:focus-visible { outline-offset: -3px; }
 
 .side-foot .out { display: none; }
+/* 옆줄의 그림(문구, 별, 언덕 위의 양)은 넓은 창의 옆줄에서만 보입니다 */
+.side-art { display: none; position: relative; padding: 24px 10px 0; }
+.side-art p { margin: 0; font-family: var(--hand); font-size: 22px; line-height: 1.25; color: var(--pen); }
+.side-art svg { display: block; fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.side-art .twinkle { position: absolute; top: 12px; right: 22px; width: 16px; height: 16px; stroke: var(--pen); stroke-width: 1.6; }
+.side-art .sheep { width: 100%; height: auto; margin-top: 6px; }
+.side-art .face { fill: var(--paper); }
+.side-art .eye { fill: var(--ink); stroke: none; }
 .side-foot .status {
   position: fixed; z-index: 21; right: 12px; bottom: calc(var(--tab-h) + env(safe-area-inset-bottom, 0px) + 10px);
   max-width: calc(100vw - 24px); padding: 6px 12px; border: 1px solid var(--rule); border-radius: 999px;
@@ -1080,7 +1088,10 @@ dialog.menu { padding: 0; width: min(340px, calc(100vw - 32px)); }
   .pages a:hover { background: var(--grid); }
   .pages a[aria-current="page"] { color: var(--ink); background: color-mix(in srgb, var(--pen) 14%, transparent); box-shadow: inset 3px 0 0 var(--pen); }
   .pages a:focus-visible { outline-offset: 1px; }
-  .side-foot { margin-top: auto; display: grid; gap: 4px; padding-top: 16px; }
+  .side-foot { display: grid; gap: 4px; padding-top: 12px; }
+  /* 로그아웃 위의 그림. 메뉴와 떨어져 옆줄 아래쪽에 붙고, 창이 낮아 자리가 모자라면 그리지 않습니다 */
+  .side-art { margin-top: auto; }
+  .side-foot { margin-top: 0; }
   .side-foot .status, .side-foot .status.note, .side-foot .status.fail, .side-foot .status.ok {
     position: static; max-width: none; padding: 0 12px; border: 0; border-radius: 0; background: none; box-shadow: none; animation: none; color: var(--muted);
   }
@@ -1091,4 +1102,10 @@ dialog.menu { padding: 0; width: min(340px, calc(100vw - 32px)); }
     color: var(--muted); font-size: 13px; text-align: left;
   }
   .side-foot .out:hover { color: var(--ink); background: var(--grid); }
+}
+@media (min-width: 1100px) and (min-height: 700px) {
+  .side-art { display: block; }
+}
+@media (min-width: 1100px) and (max-height: 699px) {
+  .side-foot { margin-top: auto; }
 }

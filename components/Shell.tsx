@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { sb, configured } from "@/lib/supabase";
 import Knot from "./Knot";
+import Sheep from "./Sheep";
 import About from "./About";
 import Icon, { type IconName } from "./Icons";
 
@@ -89,6 +90,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
           </nav>
+          {/* 넓은 창의 옆줄에서만, 로그아웃 위에 놓이는 그림 */}
+          <Sheep />
           <div className="side-foot">
             <span className={`status${tone}`} role="status">{status}</span>
             <button type="button" className="out" onClick={logout}><Icon name="out" /><span>로그아웃</span></button>
