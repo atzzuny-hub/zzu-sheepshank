@@ -962,24 +962,30 @@ button.he-row:hover { background: color-mix(in srgb, var(--pen) 8%, transparent)
 .he-missing code { padding: 1px 6px; border-radius: 4px; background: var(--paper); font-size: 13px; }
 
 /* 기록 창과 목표 창 (틀은 시간 화면의 기록 창 .tm-sheet, .tm-form 과 같습니다) */
+/* 줄 사이: 묶음마다 이름표 위로 18px, 이름표와 칸 사이는 8px. (.he .lbl 이 바깥 여백을 0 으로 두기 때문에 여기서 다시 줍니다) */
+dialog.tm-sheet:has(.he-form) { padding: 22px 22px 20px; }
+.he-form h2 { margin: 0; }
+.he-form .lbl { margin: 18px 0 8px; }
 .he-form .lbl span { margin-left: auto; font-weight: 400; }
-.he-kinds { display: flex; flex-wrap: wrap; gap: 6px; }
+.he-form > input[type="text"] { margin-top: 0; padding: 8px 2px; }
+.he-form .dlg-actions { margin-top: 24px; }
+.he-kinds { display: flex; flex-wrap: wrap; gap: 8px; }
 .he-kinds button { min-height: 40px; padding: 0 14px; border: 1px solid var(--rule); border-radius: 999px; background: none; font-size: 13px; }
 .he-kinds button[aria-pressed="true"] { background: var(--pen); border-color: var(--pen); color: var(--paper); font-weight: 600; }
-.he-big { display: flex; align-items: baseline; gap: 8px; padding: 4px 14px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
+.he-big { display: flex; align-items: baseline; gap: 8px; padding: 8px 16px; border: 1px solid var(--rule); border-radius: 10px; background: var(--paper); }
 .he-big:focus-within { outline: 2px solid var(--pen); outline-offset: 1px; }
 .he-form .he-big input[type="text"] {
   flex: 1; min-width: 0; width: auto; margin: 0; padding: 4px 0; border: 0; outline: none;
   font-family: var(--sans); font-size: 34px; font-weight: 600; font-variant-numeric: tabular-nums;
 }
 .he-big span { font-size: 14px; color: var(--muted); }
-.he-when { display: flex; gap: 6px; }
+.he-when { display: flex; gap: 8px; }
 .he-when input { flex: 1; min-width: 0; min-height: 44px; padding: 0 10px; border: 1px solid var(--rule); border-radius: 8px; background: var(--paper); color: var(--ink); font: inherit; font-size: 16px; }
 .he-pair { display: flex; align-items: baseline; gap: 10px; }
 .he-form .he-pair input[type="text"] { margin-top: 0; text-align: center; }
 .he-pair i { font-style: normal; color: var(--muted); }
 .btn.he-sure { border-color: var(--sun); color: var(--sun); }
-.he-form .msg { margin: 12px 0 0; color: var(--sun); }
+.he-form .msg { margin: 14px 0 0; color: var(--sun); }
 
 @media (max-width: 859px) {
   .he-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
@@ -999,6 +1005,7 @@ button.he-row:hover { background: color-mix(in srgb, var(--pen) 8%, transparent)
   .he .top .tools .btn { flex: 1; min-height: 44px; }
   .he-kinds button { min-height: 44px; }
   .he-form .dlg-actions .btn { min-height: 44px; padding: 0 18px; }
+  dialog.tm-sheet:has(.he-form) { padding: 20px 16px calc(18px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ---------- 틀 ----------
