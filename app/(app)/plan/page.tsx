@@ -23,6 +23,7 @@ export default function PlanPage() {
   const [ready, setReady] = useState(false);
   const [narrow, setNarrow] = useState(false);
   const [sure, setSure] = useState<string | null>(null);
+  const [shut, setShut] = useState<Set<string>>(new Set()); // 폰에서 접어 둔 영역
   const [paths, setPaths] = useState<string[]>([]);
   const map = useRef<HTMLDivElement>(null);
   const focusAdd = useRef<string | null>(null);
@@ -106,33 +107,50 @@ export default function PlanPage() {
     setActions((p) => p.map((x) => (x.id === it.id ? { ...x, is_key: !it.is_key } : x)));
     try { await updateAction(it.id, it.is_key ? { is_key: false } : { is_key: true, key_sort: Math.floor(Date.now() / 1000) }); setStatus("저장됨"); } catch { fail(); }
   }
+  // 폰에서는 × 를 잘못 누르기 쉬워서 한 번 더 물어봅니다. 지우면 그 일에 그어 둔 X 기록도 같이 사라집니다
   async function removeAction(id: string) {
+    if (narrow && sure !== id) {
+      setSure(id);
+      setTimeout(() => setSure((s) => (s === id ? null : s)), 4000);
+      return;
+    }
+    setSure(null);
     setActions((p) => p.filter((x) => x.id !== id));
     try { await deleteAction(id); } catch { fail(); }
+  }
+  function toggleShut(id: string) {
+    setShut((p) => { const s = new Set(p); if (s.has(id)) s.delete(id); else s.add(id); return s; });
   }
   function onFuture(v: string) {
     setFuture(v);
     queue("future", () => saveFuture(uid, v));
   }
 
-  const areaBox = (a: Area) => (
-    <div className="area" key={a.id}>
+  const areaBox = (a: Area) => {
+    const its = actions.filter((x) => x.area_id === a.id), keys = its.filter((x) => x.is_key).length, closed = shut.has(a.id);
+    return (
+    <div className={`area${closed ? " shut" : ""}`} key={a.id}>
       <div className="ttl">
+        {/* 접기 버튼과 개수는 폰에서만 보입니다 */}
+        <button type="button" className="fold" aria-expanded={!closed} aria-label={`${a.name || "영역"} ${closed ? "펴기" : "접기"}`}
+          onClick={() => toggleShut(a.id)}>▾</button>
         <input type="text" maxLength={20} value={a.name} placeholder="영역 이름" aria-label="영역 이름" data-area={a.id}
           onChange={(e) => nameArea(a.id, e.target.value)} />
+        <span className="acnt" aria-label={`별표 ${keys}개, 할 일 ${its.length}개`}>★ {keys} / {its.length}</span>
         <button type="button" className={`adel${sure === a.id ? " sure" : ""}`} aria-label={`${a.name || "영역"} 지우기`}
           onClick={() => removeArea(a)} onBlur={() => setSure(null)}>
           {sure === a.id ? "할 일까지 지우기" : "×"}
         </button>
       </div>
       <ul className="items">
-        {actions.filter((x) => x.area_id === a.id).map((it) => (
+        {its.map((it) => (
           <li key={it.id} className={`it${it.is_key ? " key" : ""}`}>
             <button type="button" className="star" aria-pressed={it.is_key} aria-label={`가장 중요한 일로 뽑기: ${it.text}`} onClick={() => star(it)}>
               <Star />
             </button>
             <input type="text" maxLength={30} value={it.text} aria-label="할 일" onChange={(e) => editAction(it.id, e.target.value)} />
-            <button type="button" className="idel" aria-label={`${it.text} 지우기`} onClick={() => removeAction(it.id)}>×</button>
+            <button type="button" className={`idel${sure === it.id ? " sure" : ""}`} aria-label={`${it.text} 지우기`}
+              onClick={() => removeAction(it.id)} onBlur={() => setSure(null)}>{sure === it.id ? "지우기" : "×"}</button>
           </li>
         ))}
         <li className="it add">
@@ -145,7 +163,8 @@ export default function PlanPage() {
         </li>
       </ul>
     </div>
-  );
+    );
+  };
 
   return (
     <section>

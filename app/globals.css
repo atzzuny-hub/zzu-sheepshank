@@ -568,6 +568,37 @@ dialog.tm-sheet { padding: 18px 16px 16px; }
   .app:has(textarea.paper:focus) .side-foot .status { top: calc(env(safe-area-inset-top, 0px) + 58px); bottom: auto; }
 }
 
+/* plan: 폰(860px 미만)에서는 원 두 개 대신 날짜 카드 하나, 영역은 접히는 카드로 보여 줍니다 */
+.fold, .acnt { display: none; }
+.it .idel.sure { width: auto; padding: 0 10px; opacity: 1; color: var(--sun); font-size: 13px; white-space: nowrap; }
+@media (max-width: 859px) {
+  #map { min-height: 0; padding: 4px 0 16px; gap: 14px; }
+  .col, .col.left { gap: 14px; }
+  .core { align-items: stretch; }
+  .core .now, .down { display: none; }
+  .core .future {
+    width: 100%; height: auto; display: flex; flex-direction: row-reverse; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 10px 14px; border-width: 2px; border-radius: var(--radius); background: var(--panel); font-size: 26px; text-align: left;
+  }
+  .core .future input[type="date"] { width: auto; min-height: 44px; font-size: 18px; text-align: right; }
+  .area { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
+  .ttl { align-items: center; min-height: 52px; border: 0; border-bottom: 1px solid var(--rule); background: none; }
+  .ttl input { padding: 3px 4px; font-size: 26px; }
+  .fold { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: var(--muted); font-size: 18px; transition: transform .12s; }
+  .area.shut .fold { transform: rotate(-90deg); }
+  .acnt { flex: none; display: block; font-size: 12px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .adel { min-width: 44px; min-height: 44px; }
+  .area.shut .ttl { border-bottom: 0; }
+  .area.shut .items { display: none; }
+  .items { margin: 0; padding: 4px 6px 6px; }
+  .it { min-height: 48px; background: none; }
+  .it.key { background: linear-gradient(var(--hl), var(--hl)); }
+  .star { width: 44px; height: 44px; }
+  .it .idel { min-width: 44px; height: 44px; }
+  .it.add { padding-left: 44px; }
+}
+@media (prefers-reduced-motion: reduce) { .fold { transition: none; } }
+
 /* ---------- 틀 ----------
    폰과 좁은 창: 위에 로고 줄(오른쪽에 메뉴 ⋯), 아래에 고정 탭바.
    넓은 창(1100px 이상): 왼쪽에 옆줄. 표가 좁아지지 않도록 859px 가 아니라 1100px 에서 나눕니다. */
