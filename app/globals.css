@@ -7,6 +7,7 @@
   --muted: #667085;
   --hl: rgba(255, 230, 70, .5);
   --sun: #B4483E;
+  --up: #23875A;
   --panel: #FFFFFF;
   --hand: "Nanum Pen Script", "Gowun Batang", "Apple SD Gothic Neo", "Malgun Gothic", cursive;
   --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
@@ -24,13 +25,13 @@
   :root:not([data-theme="light"]) {
     --paper: #131822; --grid: #1D2533; --rule: #303B4E; --ink: #E4E8F0;
     --pen: #9DB7FF; --muted: #8E98AC; --hl: rgba(220, 196, 50, .2);
-    --sun: #E08A80; --panel: #1B2230; color-scheme: dark;
+    --sun: #E08A80; --up: #5FCB8E; --panel: #1B2230; color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --paper: #131822; --grid: #1D2533; --rule: #303B4E; --ink: #E4E8F0;
   --pen: #9DB7FF; --muted: #8E98AC; --hl: rgba(220, 196, 50, .2);
-  --sun: #E08A80; --panel: #1B2230; color-scheme: dark;
+  --sun: #E08A80; --up: #5FCB8E; --panel: #1B2230; color-scheme: dark;
 }
 html { scroll-padding-top: env(safe-area-inset-top, 0px); }
 *, *::before, *::after { box-sizing: border-box; }
@@ -663,6 +664,36 @@ dialog.tm-sheet { padding: 18px 16px 16px; }
   .it.add { padding-left: 44px; }
 }
 @media (prefers-reduced-motion: reduce) { .fold { transition: none; } }
+
+/* time: 맨 위의 요약. 그날 지킨 일, 집중 시간, 시간 통계를 가로로 놓습니다 */
+.tm-stats { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr); gap: 12px; margin-bottom: 20px; }
+.tm-stats[inert] { opacity: .55; }
+.tm-stats .blk { margin: 0; }
+.tm-stats h2 { margin: 0 0 8px; padding: 0; border: 0; font-family: var(--sans); font-size: 13px; font-weight: 600; line-height: 1.5; color: var(--muted); }
+.tm-stats h2 small { font-weight: 400; }
+.tm-big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 12px; font-family: var(--hand); font-size: 42px; line-height: 1; }
+.tm-big small { font-size: .62em; color: var(--muted); }
+.tm-gain { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--up); white-space: nowrap; }
+.tm-gain.down { color: var(--muted); }
+.tm-pie { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0 20px; }
+.tm-pie h2 { grid-column: 1 / -1; }
+.tm-donut { position: relative; width: 112px; height: 112px; }
+.tm-donut svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.tm-donut circle { fill: none; stroke-width: 14; }
+.tm-donut .bg { stroke: var(--grid); }
+.tm-donut span { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; font-family: var(--hand); font-size: 19px; line-height: 1.15; }
+.tm-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; font-size: 13px; }
+.tm-legend li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto 4ch; align-items: center; gap: 8px; min-height: 26px; }
+.tm-legend i { width: 12px; height: 12px; border-radius: 50%; }
+.tm-legend .nm { font-family: var(--hand); font-size: 21px; line-height: 1.1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tm-legend .t { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tm-legend .p { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tm-legend .none { display: block; color: var(--muted); }
+@media (max-width: 859px) {
+  .tm-stats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; margin-bottom: 14px; }
+  .tm-pie { grid-column: 1 / -1; }
+  .tm-big { font-size: 36px; }
+}
 
 /* ---------- 틀 ----------
    폰과 좁은 창: 위에 로고 줄(오른쪽에 메뉴 ⋯), 아래에 고정 탭바.

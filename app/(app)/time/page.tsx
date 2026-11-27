@@ -2,7 +2,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "@/components/Shell";
 import { getChecksOn, getKeyActions, getPlan, getTimelog, saveTimelog, setCheck, type TimeTask } from "@/lib/data";
-import { WD, p2, todayParts, ymd } from "@/lib/util";
+import { WD, p2, todayParts, ymd, type Area } from "@/lib/util";
 
 const START = 4; // 하루가 시작하는 시각 (새벽 4시부터 다음 날 새벽 3시까지)
 const PER = 6; // 한 시간을 10분씩 여섯 칸으로
@@ -18,11 +18,19 @@ const AREA_COLORS: Record<string, string> = {
   "자기계발": RED,
 };
 const areaColor = (name: string) => AREA_COLORS[name.replace(/\s/g, "")] ?? GRAY;
+// 집중 시간으로 세는 영역. 이 영역의 색으로 적은 시간을 집중 시간으로 봅니다
+const FOCUS_AREA = "자기계발", FOCUS = areaColor(FOCUS_AREA);
+const RING = 2 * Math.PI * 46; // 시간 통계 고리의 둘레 (반지름 46)
 const ERASE = "__erase";
 const fmt = (cells: number) => {
   const h = Math.floor(cells / PER), m = (cells % PER) * 10;
   return h ? `${h}시간${m ? ` ${m}분` : ""}` : `${m}분`;
 };
+// 하루치 기록에서 집중 시간으로 세는 칸의 수 (집중 영역의 색으로 적은 칸)
+function focusCells(tasks: TimeTask[], slots: Record<string, string>) {
+  const focus = new Set(tasks.filter((t) => t.color === FOCUS).map((t) => t.id));
+  return Object.values(slots).filter((id) => focus.has(id)).length;
+}
 const hourOf = (i: number) => (START + Math.floor(i / PER)) % 24;
 const clock = (i: number) => `${p2(hourOf(i))}:${p2((i % PER) * 10)}`; // 칸 번호를 07:30 같은 시각으로
 type Block = { id: string; from: number; len: number }; // 같은 일로 이어진 칸 한 덩어리
@@ -37,6 +45,10 @@ export default function TimePage() {
   const [pen, setPen] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [form, setForm] = useState<Form | null>(null);
+  // 맨 위 요약에 쓰는 것들: 그날 체크한 지킬 일, 전날의 집중 시간(칸 수), 계획의 영역과 지킬 일
+  const [checked, setChecked] = useState<Set<string>>(new Set());
+  const [prevFocus, setPrevFocus] = useState(0);
+  const [plan, setPlan] = useState<{ areas: Area[]; keys: string[] }>({ areas: [], keys: [] });
   const live = useRef({ tasks, slots });
   const painting = useRef<"paint" | "erase" | null>(null);
   const dlg = useRef<HTMLDialogElement>(null);
@@ -47,17 +59,27 @@ export default function TimePage() {
   useEffect(() => {
     let on = true;
     setReady(false);
-    Promise.all([getTimelog(date), getChecksOn(date)])
-      .then(([r, checked]) => {
+    const before = new Date(day.y, day.m, day.d - 1); // 집중 시간을 견줄 전날
+    Promise.all([getTimelog(date), getChecksOn(date), getTimelog(ymd(before.getFullYear(), before.getMonth(), before.getDate()))])
+      .then(([r, done, prev]) => {
         if (!on) return;
         // 노트에서 체크한 것과 맞춥니다: 체크돼 있으면 ✓, 체크가 풀렸으면 ✓ 를 지움
-        r.tasks = r.tasks.map((t) => (!t.ref ? t : checked.has(t.ref) ? { ...t, state: 1 } : t.state === 1 ? { ...t, state: 0 } : t));
+        r.tasks = r.tasks.map((t) => (!t.ref ? t : done.has(t.ref) ? { ...t, state: 1 } : t.state === 1 ? { ...t, state: 0 } : t));
         live.current = r; setTasks(r.tasks); setSlots(r.slots);
+        setChecked(done); setPrevFocus(focusCells(prev.tasks, prev.slots));
         setPen(r.tasks[0]?.id ?? null); setReady(true);
       })
       .catch(() => on && setStatus("불러오지 못했어요. 새로고침해 보세요."));
     return () => { on = false; };
-  }, [date, setStatus]);
+  }, [date, day, setStatus]);
+  // 영역 이름과 지킬 일의 수는 맨 위 요약에만 쓰여서, 못 불러와도 화면을 막지 않습니다
+  useEffect(() => {
+    let on = true;
+    getPlan()
+      .then((p) => { if (on) setPlan({ areas: p.areas, keys: p.actions.filter((a) => a.is_key).map((a) => a.id) }); })
+      .catch(() => {});
+    return () => { on = false; };
+  }, []);
   useEffect(() => {
     const stop = () => { painting.current = null; };
     window.addEventListener("pointerup", stop);
@@ -115,7 +137,10 @@ export default function TimePage() {
   function setState(t: TimeTask, state: 0 | 1 | 2) {
     patchTask(t.id, { state });
     const ref = t.ref;
-    if (ref && (state === 1) !== (t.state === 1)) queue(`check:${date}:${ref}`, () => setCheck(uid, date, ref, state === 1));
+    if (ref && (state === 1) !== (t.state === 1)) {
+      setChecked((p) => { const s = new Set(p); if (state === 1) s.add(ref); else s.delete(ref); return s; });
+      queue(`check:${date}:${ref}`, () => setCheck(uid, date, ref, state === 1));
+    }
   }
   // 시간을 칠하면 빈칸이던 일은 ✓ 가 됩니다
   function markDone(id: string) {
@@ -181,6 +206,22 @@ export default function TimePage() {
   const penTask = pen && pen !== ERASE ? byId.get(pen) : undefined;
   const nowHour = new Date().getHours();
 
+  /* ----- 맨 위 요약 ----- */
+  const doneKeys = plan.keys.filter((id) => checked.has(id)).length; // 그날 지킨 일의 수
+  const focus = tasks.reduce((n, t) => n + (t.color === FOCUS ? totals.get(t.id) ?? 0 : 0), 0);
+  const gain = focus - prevFocus; // 전날보다 늘어난 집중 시간 (칸 수)
+  // 시간 통계는 색으로 묶습니다. 색의 이름은 그 색을 쓰는 영역의 이름이고, 회색과 주인 없는 색은 기타입니다
+  const nameOf = (color: string) => (color === GRAY ? "기타"
+    : plan.areas.find((a) => areaColor(a.name) === color)?.name || Object.keys(AREA_COLORS).find((k) => AREA_COLORS[k] === color) || "기타");
+  const byColor = new Map<string, number>(COLORS.map((c) => [c, 0]));
+  tasks.forEach((t) => byColor.set(t.color, (byColor.get(t.color) ?? 0) + (totals.get(t.id) ?? 0)));
+  let turned = 0; // 고리에서 앞의 조각들이 차지한 길이
+  const pie = [...byColor].filter(([, cells]) => cells).map(([color, cells]) => {
+    const len = (cells / used) * RING, part = { color, cells, name: nameOf(color), len, off: turned };
+    turned += len;
+    return part;
+  });
+
   /* ----- 폰: 칸을 칠하는 대신 시작 시각과 길이로 적기 ----- */
   // 새 기록은 앞의 기록이 끝난 시각에서 이어 적습니다 (오늘은 지금보다 앞선 기록 가운데 마지막 것).
   // 이어 적을 기록이 없으면 오늘은 30분 전부터, 다른 날은 9시부터 시작합니다
@@ -231,8 +272,46 @@ export default function TimePage() {
           <span className="year">{day.y} {WD[new Date(day.y, day.m, day.d).getDay()]}요일</span>
           <button className="nav" onClick={() => moveDay(1)} aria-label="다음 날">›</button>
         </div>
-        <ul className="stats"><li>기록한 시간<b>{fmt(used)}</b></li></ul>
       </header>
+
+      {/* 맨 위 요약: 그날 지킨 일, 집중 시간(전날과 견줌), 무엇에 시간을 썼는지 */}
+      <div className="tm-stats" inert={!ready}>
+        <section className="blk">
+          <h2>{isToday ? "오늘 실천" : "이날 실천"}</h2>
+          <p className="tm-big">{doneKeys}<small>/ {plan.keys.length}</small></p>
+          <div className="pbar" aria-hidden="true"><i style={{ width: `${plan.keys.length ? (doneKeys / plan.keys.length) * 100 : 0}%` }} /></div>
+        </section>
+        <section className="blk">
+          <h2>집중 시간 <small>{FOCUS_AREA}</small></h2>
+          <p className="tm-big">
+            {fmt(focus)}
+            {gain !== 0 && (
+              <span className={`tm-gain${gain < 0 ? " down" : ""}`} aria-label={`전날보다 ${fmt(Math.abs(gain))} ${gain > 0 ? "더" : "덜"}`}>
+                {gain > 0 ? "▲ +" : "▼ −"}{fmt(Math.abs(gain))}
+              </span>
+            )}
+          </p>
+        </section>
+        <section className="blk tm-pie">
+          <h2>시간 통계</h2>
+          <div className="tm-donut" role="img" aria-label={pie.length ? `모두 ${fmt(used)}. ${pie.map((p) => `${p.name} ${fmt(p.cells)}`).join(", ")}` : "기록 없음"}>
+            <svg viewBox="0 0 120 120" aria-hidden="true">
+              <circle className="bg" cx="60" cy="60" r="46" />
+              {pie.map((p) => <circle key={p.color} cx="60" cy="60" r="46" stroke={p.color} strokeDasharray={`${p.len} ${RING}`} strokeDashoffset={-p.off} />)}
+            </svg>
+            <span>{used ? <>총<br />{fmt(used)}</> : "기록 없음"}</span>
+          </div>
+          <ul className="tm-legend">
+            {pie.map((p) => (
+              <li key={p.color}>
+                <i style={{ background: p.color }} /><span className="nm">{p.name}</span>
+                <span className="t">{fmt(p.cells)}</span><span className="p">{Math.round((p.cells / used) * 100)}%</span>
+              </li>
+            ))}
+            {!pie.length && <li className="none">적은 시간이 영역의 색별로 여기에 모여요</li>}
+          </ul>
+        </section>
+      </div>
 
       <div className="tm" inert={!ready}>
         {/* 폰(860px 미만): 시간표를 칠하는 대신, 한 일을 시작 시각과 길이로 적고 목록으로 봅니다 */}
