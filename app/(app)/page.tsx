@@ -157,7 +157,7 @@ export default function Home() {
             <span className="lbl">집중 시간 <small>{FOCUS_AREA}</small></span>
             <p className="hs-big">
               {log ? fmt(focus) : "–"}
-              {log && gain !== 0 && <span className={`hgain${gain < 0 ? " down" : ""}`}>{gain > 0 ? "▲ +" : "▼ −"}{fmt(Math.abs(gain))}</span>}
+              {log && gain !== 0 && <span className={`hgain${gain < 0 ? " mute" : ""}`}>{gain > 0 ? "▲ +" : "▼ −"}{fmt(Math.abs(gain))}</span>}
             </p>
             <Icon name="bars" />
           </Link>

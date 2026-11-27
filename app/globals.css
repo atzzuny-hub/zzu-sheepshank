@@ -829,7 +829,8 @@ dialog.tm-sheet { padding: 18px 16px 16px; }
 .tm-big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 12px; font-family: var(--hand); font-size: 42px; line-height: 1; }
 .tm-big small { font-size: .62em; color: var(--muted); }
 .tm-gain, .hgain { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--up); white-space: nowrap; }
-.tm-gain.down, .hgain.down { color: var(--muted); }
+/* 줄었을 때는 흐리게. 이름을 down 으로 지으면 계획 화면의 화살표(.down)와 겹쳐 폰에서 숨겨집니다 */
+.tm-gain.mute, .hgain.mute { color: var(--muted); }
 .tm-pie { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 0 20px; }
 .tm-pie h2 { grid-column: 1 / -1; }
 .tm-donut { position: relative; width: 112px; height: 112px; }

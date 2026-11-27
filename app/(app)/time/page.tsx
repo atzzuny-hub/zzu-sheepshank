@@ -247,7 +247,7 @@ export default function TimePage() {
           <p className="tm-big">
             {fmt(focus)}
             {gain !== 0 && (
-              <span className={`tm-gain${gain < 0 ? " down" : ""}`} aria-label={`전날보다 ${fmt(Math.abs(gain))} ${gain > 0 ? "더" : "덜"}`}>
+              <span className={`tm-gain${gain < 0 ? " mute" : ""}`} aria-label={`전날보다 ${fmt(Math.abs(gain))} ${gain > 0 ? "더" : "덜"}`}>
                 {gain > 0 ? "▲ +" : "▼ −"}{fmt(Math.abs(gain))}
               </span>
             )}
