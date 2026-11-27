@@ -48,7 +48,8 @@ export function Missing() {
   return (
     <section className="blk he-missing">
       <h2>건강 기록을 담을 표가 아직 없어요</h2>
-      <p>Supabase 대시보드의 SQL Editor를 열고, 이 프로젝트의 <code>supabase/schema.sql</code> 파일에서 <b>“건강”</b> 줄부터 끝까지를 붙여 넣은 뒤 Run을 눌러 주세요. 한 번만 하면 됩니다.</p>
+      <p>Supabase 대시보드의 SQL Editor를 열고, 이 프로젝트의 <code>supabase/health.sql</code> 파일 내용 <b>전체</b>를 붙여 넣은 뒤 Run을 눌러 주세요. 한 번만 하면 됩니다.</p>
+      <p><code>schema.sql</code>은 처음 설치할 때 쓰는 파일이라, 이미 쓰고 있는 곳에 다시 실행하면 “already exists” 오류가 납니다.</p>
       <p>실행한 뒤 이 화면을 새로고침하면 혈당과 몸무게를 적을 수 있어요.</p>
     </section>
   );

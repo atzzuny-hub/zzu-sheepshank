@@ -58,5 +58,5 @@ export function daily(rows: { date: string; at: string; value: number }[], t: To
   });
 }
 
-// 건강 기록을 담을 표가 아직 없어서 난 오류인지 (supabase/schema.sql 의 '건강' 부분을 아직 실행하지 않았을 때)
+// 건강 기록을 담을 표가 아직 없어서 난 오류인지 (supabase/health.sql 을 아직 실행하지 않았을 때)
 export const noTable = (e: unknown) => e instanceof Error && /schema cache|does not exist|could not find the table/i.test(e.message);
