@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useApp } from "@/components/Shell";
+import { RecentMomentum } from "@/components/MomentumList";
 import { getJournal, saveJournal } from "@/lib/data";
 import { WD, p2, todayParts, ymd, type Journal } from "@/lib/util";
 
@@ -189,6 +190,9 @@ function Momentum() {
           {step < 3 && <button className="btn" onClick={next}>다음 단계로</button>}
         </div>
       </div>
+
+      {/* 그날의 글을 다 불러온 뒤에만 화면의 글을 목록에 비춥니다 (불러오는 동안의 글은 앞의 날 것일 수 있어서) */}
+      <RecentMomentum date={date} j={ready ? j : null} />
     </section>
   );
 }

@@ -88,6 +88,11 @@ export async function getJournalsIn(y: number, m: number): Promise<(Journal & { 
   );
   return (rows ?? []).map((r) => ({ d: +String(r.date).slice(8, 10), pour: r.pour ?? "", listen: r.listen ?? "", teach: r.teach ?? "" }));
 }
+// 가장 최근에 모멘텀 글을 쓴 날들 (최근 날짜부터 몇 개만). 모멘텀 화면 아래의 목록에 씁니다.
+export async function getRecentJournals(limit: number): Promise<(Journal & { date: string })[]> {
+  const rows = await ok(sb().from("journals").select("date,pour,listen,teach").order("date", { ascending: false }).limit(limit));
+  return (rows ?? []).map((r) => ({ date: String(r.date), pour: r.pour ?? "", listen: r.listen ?? "", teach: r.teach ?? "" }));
+}
 
 /* ---------- 시간 ---------- */
 export type TimeTask = { id: string; text: string; color: string; state: 0 | 1 | 2; ref?: string };
