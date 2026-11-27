@@ -1,7 +1,8 @@
 // 메뉴와 버튼에 쓰는 선 아이콘. 매듭 로고와 같은 굵기의 선으로 직접 그렸습니다.
 export type IconName =
   | "home" | "note" | "plan" | "momentum" | "time" | "about" | "more" | "out" | "play" | "book"
-  | "check" | "done" | "trend" | "pen" | "bars";
+  | "check" | "done" | "trend" | "pen" | "bars"
+  | "heart" | "drop" | "scale" | "move" | "bulb" | "flag";
 
 const SHAPES: Record<IconName, React.ReactNode> = {
   home: <><path d="M3.5 11 12 4l8.5 7" /><path d="M5.5 9.5V20h13V9.5" /><path d="M10 20v-5.5h4V20" /></>,
@@ -25,6 +26,13 @@ const SHAPES: Record<IconName, React.ReactNode> = {
   trend: <><path d="M3.5 16.5 9 11l4 4 7.5-7.5" /><path d="M15.5 7.5h5v5" /></>,
   pen: <><path d="M5 19l1-4.2L16.3 4.5a1.8 1.8 0 0 1 2.6 0l.6.6a1.8 1.8 0 0 1 0 2.6L9.2 18z" /><path d="M14.4 6.4l3.2 3.2" /></>,
   bars: <path d="M5 19.5V13M10 19.5V8M15 19.5v-8M20 19.5V5" />,
+  // 건강: 하트(메뉴), 물방울(혈당), 저울(몸무게), 맥박 선(운동), 전구(한마디), 깃발(목표)
+  heart: <path d="M12 20.3S4 15.4 4 9.6A4.4 4.4 0 0 1 12 7a4.4 4.4 0 0 1 8 2.6c0 5.8-8 10.7-8 10.7z" />,
+  drop: <><path d="M12 3.6c3 3.6 6 6.8 6 10.3a6 6 0 0 1-12 0c0-3.5 3-6.7 6-10.3z" /><path d="M9.2 14.3a2.9 2.9 0 0 0 2.4 2.7" /></>,
+  scale: <><rect x="4" y="4.5" width="16" height="15.5" rx="3" /><path d="M8 10a5.6 5.6 0 0 1 8 0" /><path d="M12 10.3l1.7-2.3" /></>,
+  move: <path d="M3 12.5h4l2.5-6.5 4 12 2.5-5.5h5" />,
+  bulb: <><path d="M12 3.5a5.5 5.5 0 0 0-3.4 9.8c.6.5.9 1.2.9 2v.2h5v-.2c0-.8.3-1.5.9-2A5.5 5.5 0 0 0 12 3.5z" /><path d="M9.8 18h4.4M10.7 20.5h2.6" /></>,
+  flag: <><path d="M6 20.5v-16" /><path d="M6 5h11l-2.3 3.8L17 12.5H6" /></>,
 };
 
 export default function Icon({ name }: { name: IconName }) {

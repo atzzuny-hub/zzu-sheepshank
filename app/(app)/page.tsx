@@ -10,7 +10,7 @@ import {
   getChecksBetween, getJournal, getKeyActions, getMonth, getPlan, getTimelog, saveNote, setCheck, type TimeTask,
 } from "@/lib/data";
 import { FOCUS_AREA, NEXT, areaColor, clock, colorName, dayLayout, fmt, focusCells } from "@/lib/time";
-import { WD, daysIn, todayParts, ym, ymd, type Action, type Area, type Journal } from "@/lib/util";
+import { WD, daysIn, dday, todayParts, ym, ymd, type Action, type Area, type Journal } from "@/lib/util";
 
 // 모멘텀 카드의 문구. 1·2·3 은 이제 쓸 단계, 0 은 세 단계를 다 쓴 날
 const WRITE = [
@@ -98,10 +98,7 @@ export default function Home() {
   });
 
   /* ----- 되고 싶은 날까지 ----- */
-  const f = future ? new Date(`${future}T00:00:00`) : new Date(t.y + 1, 11, 31);
-  const diff = Math.round((f.getTime() - new Date(t.y, t.m, t.d).getTime()) / 864e5);
-  const dday = diff > 0 ? `D-${diff}` : diff === 0 ? "D-day" : `D+${-diff}`;
-  const goal = `${f.getFullYear()}년 ${f.getMonth() + 1}월 ${f.getDate()}일의 나까지`;
+  const { f, label: left, goal } = dday(future, t);
 
   /* ----- 노트 카드의 달력 ----- */
   const total = daysIn(view.y, view.m), lead = new Date(view.y, view.m, 1).getDay(); // lead: 1일 앞에 비워 둘 칸 수
@@ -140,7 +137,7 @@ export default function Home() {
           <div className="hrow">
             <h1 className="hdate">{t.m + 1}월 {t.d}일 <small>{WD[new Date(t.y, t.m, t.d).getDay()]}요일</small></h1>
             {/* 되고 싶은 날까지 남은 날. 누르면 그 날짜를 정하는 계획으로 갑니다 */}
-            <Link className="dpill" href="/plan" title={goal} aria-label={`${goal} ${dday}. 계획에서 날짜 바꾸기`}>{dday}</Link>
+            <Link className="dpill" href="/plan" title={goal} aria-label={`${goal} ${left}. 계획에서 날짜 바꾸기`}>{left}</Link>
           </div>
           <p className="motto">{phrase.trim() ? phrase : <Link href="/note">{t.m + 1}월 캐치프레이즈 적기</Link>}</p>
         </div>

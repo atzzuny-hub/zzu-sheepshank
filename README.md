@@ -14,9 +14,10 @@ Supabase 대시보드의 Authentication → URL Configuration 에
 
 ## 폴더
 
-- `app/(app)/` 로그인 뒤 화면: 메인(`page.tsx`), `note`, `plan`, `momentum`, `time`, `about`
+- `app/(app)/` 로그인 뒤 화면: 메인(`page.tsx`), `note`, `plan`, `momentum`, `time`, `health`(혈당·몸무게), `about`
 - `app/login`, `app/auth/callback` 로그인
 - `components/Shell.tsx` 탭, 로그인 확인, 저장 상태
 - `lib/data.ts` Supabase 읽기와 쓰기 전부
 - `lib/time.ts` 시간 화면과 메인이 같이 쓰는 시간 계산과 영역의 색
-- `supabase/schema.sql` 테이블 구조 (이미 실행했다면 다시 실행하지 않아도 됩니다)
+- `lib/health.ts` 건강 화면의 기록 꼴과 날짜별 계산
+- `supabase/schema.sql` 테이블 구조 (이미 실행했다면 다시 실행하지 않아도 됩니다. 건강 화면을 쓰려면 맨 아래 “건강” 부분만 따로 실행하세요)

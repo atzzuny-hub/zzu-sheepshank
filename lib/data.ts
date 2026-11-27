@@ -1,5 +1,6 @@
 import { sb, ok } from "./supabase";
 import { ymd, ym, daysIn, type Area, type Action, type Journal } from "./util";
+import { NO_GOALS, type Glucose, type Goals, type Weight } from "./health";
 
 /* ---------- 계획 ---------- */
 export async function getPlan() {
@@ -115,3 +116,55 @@ export async function getChecksOn(date: string) {
   const rows = await ok(sb().from("checks").select("action_id").eq("date", date));
   return new Set((rows ?? []).map((r) => r.action_id as string));
 }
+// 날짜 구간의 시간 기록 (날짜순). 건강 화면이 운동 시간을 셀 때 씁니다
+export async function getTimelogs(from: string, to: string) {
+  const rows = await ok(sb().from("timelogs").select("date,tasks,slots").gte("date", from).lte("date", to).order("date"));
+  return (rows ?? []).map((r) => ({ date: String(r.date), tasks: (r.tasks ?? []) as TimeTask[], slots: (r.slots ?? {}) as Record<string, string> }));
+}
+
+/* ---------- 건강 ---------- */
+// 되고 싶은 날 (메인과 건강의 D-day 에 씁니다). 정하지 않았으면 빈칸
+export async function getFuture() {
+  const r = await ok(sb().from("settings").select("future_date").maybeSingle());
+  return (r?.future_date as string | null) ?? "";
+}
+export async function getGlucose(from: string, to: string): Promise<Glucose[]> {
+  const rows = await ok(sb().from("glucose").select("id,date,at,value,kind,memo").gte("date", from).lte("date", to).order("date").order("at").limit(5000));
+  return (rows ?? []).map((r) => ({ id: r.id as string, date: String(r.date), at: r.at ?? "", value: Number(r.value), kind: r.kind ?? "", memo: r.memo ?? "" }));
+}
+// 새 기록을 넣고, 데이터베이스가 지어 준 id 를 돌려줍니다
+async function insertRow(table: "glucose" | "weights", row: object) {
+  const r = await ok(sb().from(table).insert(row).select("id").single());
+  if (!r) throw new Error("저장한 줄을 돌려받지 못했습니다");
+  return r.id as string;
+}
+export const addGlucose = (g: Omit<Glucose, "id">) => insertRow("glucose", g);
+export const updateGlucose = (id: string, g: Omit<Glucose, "id">) => ok(sb().from("glucose").update(g).eq("id", id));
+export const deleteGlucose = (id: string) => ok(sb().from("glucose").delete().eq("id", id));
+
+export async function getWeights(from: string, to: string): Promise<Weight[]> {
+  const rows = await ok(sb().from("weights").select("id,date,at,value,memo").gte("date", from).lte("date", to).order("date").order("at").limit(5000));
+  return (rows ?? []).map((r) => ({ id: r.id as string, date: String(r.date), at: r.at ?? "", value: Number(r.value), memo: r.memo ?? "" }));
+}
+export const addWeight = (w: Omit<Weight, "id">) => insertRow("weights", w);
+export const updateWeight = (id: string, w: Omit<Weight, "id">) => ok(sb().from("weights").update(w).eq("id", id));
+export const deleteWeight = (id: string) => ok(sb().from("weights").delete().eq("id", id));
+
+export async function getGoals(): Promise<Goals> {
+  const r = await ok(sb().from("health_goals").select("glucose_low,glucose_high,weight_goal,move_goal").maybeSingle());
+  if (!r) return NO_GOALS;
+  return {
+    glucose_low: Number(r.glucose_low), glucose_high: Number(r.glucose_high),
+    weight_goal: r.weight_goal == null ? null : Number(r.weight_goal), move_goal: r.move_goal == null ? null : Number(r.move_goal),
+  };
+}
+export const saveGoals = (uid: string, g: Goals) => ok(sb().from("health_goals").upsert({ user_id: uid, ...g }));
+
+export async function getHealthNote(date: string) {
+  const r = await ok(sb().from("health_notes").select("note").eq("date", date).maybeSingle());
+  return (r?.note as string | undefined) ?? "";
+}
+export const saveHealthNote = (uid: string, date: string, note: string) =>
+  note.trim()
+    ? ok(sb().from("health_notes").upsert({ user_id: uid, date, note }))
+    : ok(sb().from("health_notes").delete().eq("date", date));

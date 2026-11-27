@@ -19,11 +19,11 @@ export function useApp(): App {
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 let pending = 0;
 
-// 폰과 좁은 창에서는 앞의 다섯 개가 아래 탭바에 놓이고 소개는 메뉴(⋯) 안으로 들어갑니다.
-// 넓은 창에서는 여섯 개가 모두 왼쪽 옆줄에 놓입니다. 배치는 globals.css 의 "틀" 부분이 정합니다.
+// 폰과 좁은 창에서는 앞의 여섯 개가 아래 탭바에 놓이고 소개는 메뉴(⋯) 안으로 들어갑니다.
+// 넓은 창에서는 일곱 개가 모두 왼쪽 옆줄에 놓입니다. 배치는 globals.css 의 "틀" 부분이 정합니다.
 const TABS: [string, string, IconName][] = [
   ["/", "메인", "home"], ["/note", "노트", "note"], ["/plan", "계획", "plan"],
-  ["/momentum", "모멘텀", "momentum"], ["/time", "시간", "time"], ["/about", "소개", "about"],
+  ["/momentum", "모멘텀", "momentum"], ["/time", "시간", "time"], ["/health", "건강", "heart"], ["/about", "소개", "about"],
 ];
 
 export default function Shell({ children }: { children: React.ReactNode }) {
@@ -83,7 +83,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           </div>
           <nav className="pages" aria-label="페이지">
             {TABS.map(([href, label, icon]) => (
-              <Link key={href} href={href} aria-current={path === href ? "page" : undefined}>
+              // 건강의 상세 화면(/health/glucose 같은 곳)에서도 건강 메뉴에 불이 들어옵니다
+              <Link key={href} href={href} aria-current={path === href || (href !== "/" && path.startsWith(`${href}/`)) ? "page" : undefined}>
                 <Icon name={icon} /><span>{label}</span>
               </Link>
             ))}

@@ -29,11 +29,16 @@ export const fmt = (cells: number) => {
 export const hourOf = (i: number) => (START + Math.floor(i / PER)) % 24;
 export const clock = (i: number) => `${p2(hourOf(i))}:${p2((i % PER) * 10)}`; // 칸 번호를 07:30 같은 시각으로
 
-// 하루치 기록에서 집중 시간으로 세는 칸의 수 (집중 영역의 색으로 적은 칸)
-export function focusCells(tasks: TimeTask[], slots: Record<string, string>) {
-  const focus = new Set(tasks.filter((t) => t.color === FOCUS).map((t) => t.id));
-  return Object.values(slots).filter((id) => focus.has(id)).length;
+// 운동 시간으로 세는 영역. 건강 화면이 이 영역의 색으로 적은 시간을 운동 시간으로 봅니다
+export const MOVE_AREA = "건강관리", MOVE = areaColor(MOVE_AREA);
+
+// 하루치 기록에서 어느 색으로 적은 칸의 수
+export function cellsOf(tasks: TimeTask[], slots: Record<string, string>, color: string) {
+  const ids = new Set(tasks.filter((t) => t.color === color).map((t) => t.id));
+  return Object.values(slots).filter((id) => ids.has(id)).length;
 }
+// 하루치 기록에서 집중 시간으로 세는 칸의 수 (집중 영역의 색으로 적은 칸)
+export const focusCells = (tasks: TimeTask[], slots: Record<string, string>) => cellsOf(tasks, slots, FOCUS);
 
 export type Block = { id: string; from: number; len: number }; // 같은 일로 이어진 칸 한 덩어리
 // 하루치 기록을 그리기 좋게 정리합니다: 칸마다 어느 일인지(at), 일마다 쓴 칸 수(totals), 모두 쓴 칸 수(used),
